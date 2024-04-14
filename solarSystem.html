@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js Solar System</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.138.0/build/three.module.js"
+        }
+    }
+    </script>
+    <script type="module" src="script.js"></script>
+    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.5.1/dist/gsap.min.js"></script>
+</head>
+<body>
+    <div class="buttonBarWrapper">
+        <div id="planetButtons" class="buttonsContainer">
+            <button><a href = "solarSystem.html">Sun</a></button>
+            <button onclick="focusOnPlanet('Mercúrio')">Mercúrio</button>
+            <button onclick="focusOnPlanet('Vénus')">Vénus</button>
+            <button onclick="focusOnPlanet('Terra')">Terra</button>
+            <button onclick="focusOnPlanet('Marte')">Marte</button>
+            <button onclick="focusOnPlanet('Júpiter')">Júpiter</button>
+            <button onclick="focusOnPlanet('Saturno')">Saturno</button>
+            <button onclick="focusOnPlanet('Urano')">Urano</button>
+            <button onclick="focusOnPlanet('Neptuno')">Neptuno</button>
+        </div>
+    </div>
+
+</body>
+</html>
