@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Three.js Solar System</title>
+    <title>Cosmic View</title>
     <link rel="stylesheet" href="style.css">
     <script type="importmap">
     {
@@ -12,25 +12,22 @@
     }
     </script>
     <script type="module" src="script.js"></script>
-    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js"></script>
-    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js"></script>
-    <script src="https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.5.1/dist/gsap.min.js"></script>
 </head>
 <body>
     <div class="buttonBarWrapper">
         <div id="planetButtons" class="buttonsContainer">
             <button><a href = "index.html">Sun</a></button>
-            <button onclick="focusOnPlanet('Mercúrio')">Mercúrio</button>
-            <button onclick="focusOnPlanet('Vénus')">Vénus</button>
-            <button onclick="focusOnPlanet('Terra')">Terra</button>
-            <button onclick="focusOnPlanet('Marte')">Marte</button>
-            <button onclick="focusOnPlanet('Júpiter')">Júpiter</button>
-            <button onclick="focusOnPlanet('Saturno')">Saturno</button>
-            <button onclick="focusOnPlanet('Urano')">Urano</button>
-            <button onclick="focusOnPlanet('Neptuno')">Neptuno</button>
+            <button id="Mercury">Mercury</button>
+            <button id="Venus">Venus</button>
+            <button id="Earth">Earth</button>
+            <button id="Mars">Mars</button>
+            <button id="Jupiter">Jupiter</button>
+            <button id="Saturn">Saturn</button>
+            <button id="Uranus">Uranus</button>
+            <button id="Neptune">Neptune</button>
         </div>
     </div>
 
+    <div id="orbitMessage">Press SPACE BAR to Start/Stop Orbital View</div>
 </body>
 </html>
