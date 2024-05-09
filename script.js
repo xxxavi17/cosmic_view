@@ -5,80 +5,48 @@ import { RenderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postpro
 import { UnrealBloomPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/GLTFLoader.js';
 
-
 let focusedPlanet = null;
 let orbitEnabled = true;
-
-document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space') {
-        orbitEnabled = !orbitEnabled;
-    }
-});
+let earthModel = null; // Keep track of the Earth model
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000); // Adjusted far plane
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
 camera.position.z = 1000;
 camera.position.y = 200;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true }); // Enabled anti-aliasing
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 const renderScene = new RenderPass(scene, camera);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.6; // Brightness threshold - lower values mean more glow
-bloomPass.strength = 1.1; // Glow strength - higher values produce more glow
-bloomPass.radius = 0.1; // Glow radius - higher values produce a larger glow
+bloomPass.threshold = 0.6;
+bloomPass.strength = 1.1;
+bloomPass.radius = 0.1;
 const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
-composer.addPass(bloomPass); 
+composer.addPass(bloomPass);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableZoom = true;
 
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// BACKGROUND ///////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 function createSkybox() {
-    // The size of the skybox should be large enough to encompass your entire scene.
     const skyboxSize = 50000;
     const skyboxGeometry = new THREE.BoxGeometry(skyboxSize, skyboxSize, skyboxSize);
-
-    // Load the textures for each side of the skybox.
     const loader = new THREE.TextureLoader();
     const materialArray = [
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // right
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // left
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // top
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // bottom
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // front
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }), // back
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide })
     ];
-
     const skybox = new THREE.Mesh(skyboxGeometry, materialArray);
     scene.add(skybox);
 }
-// Remember to call the createSkybox function in your initialization code.
 createSkybox();
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// LUZ //////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 const sunlight = new THREE.PointLight(0xffffff, 1, 10500);
 sunlight.position.set(0, 0, 0);
@@ -88,16 +56,6 @@ const sunGeometry = new THREE.SphereGeometry(300, 200, 200);
 const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFA500 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// PLANETAS /////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 const solarSystemPlanets = [
     { name: "Mercury", color: 0x909090, size: 2.9 * 3, distance: 35 * 2, orbitalSpeed: 0.004 },
@@ -110,56 +68,84 @@ const solarSystemPlanets = [
     { name: "Neptune", color: 0x1E90FF, size: 5 * 3, distance: 110 * 2, orbitalSpeed: 0.0007 }
 ];
 
+
 const planetModels = {
-    "Mercury": "models/mercury.glb",  // replace with actual paths
-    "Venus": "models/venus.glb",
     "Earth": "models/earth.glb",
-    "Mars": "models/mars.glb",
-    "Jupiter": "models/jupiter.glb",
-    "Saturn": "models/saturn.glb",
-    "Uranus": "models/uranus.glb",
-    "Neptune": "models/neptune.glb"
 };
 
-const planets = solarSystemPlanets.map(createPlanet);
+const planets = [];
 
+solarSystemPlanets.forEach(planetData => {
+    const planet = createPlanet(planetData);
+    if (planetData.name === "Earth") {
+        loadModelAbovePlanet(planetData, planet);
+    }
+    planets.push(planet);
+});
 
-function createPlanet(planet) {
-    const scaledSize = planet.size * 1.5; // Assuming your size scaling is correct
+function createPlanet(planetData) {
+    const scaledSize = planetData.size * 1.5;
     const planetGeometry = new THREE.SphereGeometry(scaledSize, 200, 200);
-    const planetMaterial = new THREE.MeshLambertMaterial({ color: planet.color });
+    const planetMaterial = new THREE.MeshLambertMaterial({ color: planetData.color });
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
-    planetMesh.orbitalRadius = planet.distance * 7;
-    planetMesh.orbitalSpeed = planet.orbitalSpeed / 3;
+    planetMesh.orbitalRadius = planetData.distance * 7;
+    planetMesh.orbitalSpeed = planetData.orbitalSpeed / 3;
     planetMesh.angle = Math.random() * Math.PI * 2;
-    planetMesh.name = planet.name;
-
-     // Initial position of the planet on its orbit
-     planetMesh.position.x = Math.cos(planetMesh.angle) * planetMesh.orbitalRadius;
-     planetMesh.position.z = Math.sin(planetMesh.angle) * planetMesh.orbitalRadius;
-
-    // Create orbit path
-    createOrbitPath(planetMesh.orbitalRadius);
-
+    planetMesh.name = planetData.name;
+    planetMesh.position.x = Math.cos(planetMesh.angle) * planetMesh.orbitalRadius;
+    planetMesh.position.z = Math.sin(planetMesh.angle) * planetMesh.orbitalRadius;
     scene.add(planetMesh);
+
+    // Only load the Earth model for Earth and ensure it is loaded only once
+    if (planetData.name === "Earth" && !earthModel) {
+        loadModelAbovePlanet(planetData, planetMesh);
+    }
+
+    createOrbitPath(planetMesh.orbitalRadius);
     return planetMesh;
 }
 
 
+function loadModelAbovePlanet(planetData, planetMesh) {
+    const loader = new GLTFLoader();
+    if (planetModels[planetData.name]) {
+        loader.load(planetModels[planetData.name], (gltf) => {
+            if (earthModel) { // Check if the model already exists
+                scene.remove(earthModel); // Remove the existing model from the scene
+            }
+            earthModel = gltf.scene;
+            adjustEarthMaterial(earthModel);
+            const scale = planetData.size * 0.02; // Adjust this scale as necessary
+            earthModel.scale.set(scale, scale, scale);
+            earthModel.position.copy(planetMesh.position);
+            scene.add(earthModel);
+            planetMesh.model = earthModel; // Attach the model directly to the mesh
+        }, undefined, (error) => {
+            console.error('Error loading model:', error);
+        });
+    }
+}
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// ANEIS DE SATURNO /////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
+function adjustEarthMaterial(earthModel) {
+    earthModel.traverse((child) => {
+        if (child.isMesh) {
+            child.material = new THREE.MeshPhysicalMaterial({
+                map: child.material.map, // Reuse existing texture maps
+                metalness: 0.1,
+                roughness: 0.3,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.05,
+                reflectivity: 0.5,
+            });
+        }
+    });
+}
 
 let saturnRingsGroup; // Global reference to the rings group
 
 function createSaturnRings(saturn) {
-    const ringCount = 5000; // The number of asteroids
+    const ringCount = 2000; // The number of asteroids
     const innerRadius = saturn.geometry.parameters.radius * 1.2;
     const outerRadius = saturn.geometry.parameters.radius * 2;
     const ringWidth = outerRadius - innerRadius;
@@ -170,7 +156,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 3; // Adjust particle size if needed
+        const particleSize = (Math.random() * 0.2 + 0.1) * 6; // Adjust particle size if needed
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -197,10 +183,10 @@ function createSaturnRings(saturn) {
 function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
     const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
     const ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffae00,
+        color: 0x6F5B3F,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.1
+        opacity: 0.4
     });
     const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
     ringMesh.rotation.x = Math.PI / 2; // Rotate the ring plane by 90 degrees on the X-axis
@@ -209,23 +195,13 @@ function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
 }
 
 
+
+
 // Assuming Saturn is already created and added to the scene
 const saturn = planets.find(p => p.name === 'Saturn');
 if (saturn) {
     createSaturnRings(saturn);
 }
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// ANEIS DE ORBITAS /////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 function createOrbitPath(orbitalRadius) {
     const orbitPoints = [];
@@ -233,20 +209,10 @@ function createOrbitPath(orbitalRadius) {
         const theta = (i / 5000) * 2 * Math.PI;
         orbitPoints.push(new THREE.Vector3(Math.cos(theta) * orbitalRadius, 0, Math.sin(theta) * orbitalRadius));
     }
-
     const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
-    
-    const orbit = new THREE.LineLoop(orbitGeometry, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, antialias: true }));
+    const orbit = new THREE.LineLoop(orbitGeometry, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }));
     scene.add(orbit);
 }
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// VARIAÇÃO DE CAMARA ///////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
 
@@ -295,14 +261,6 @@ function focusOnPlanet(planetName) {
 }
 
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// ANIMAÇÃO /////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
 document.querySelectorAll('#planetButtons button').forEach(button => {
     button.addEventListener('click', event => {
         const planetName = event.target.textContent.trim();
@@ -313,53 +271,32 @@ document.querySelectorAll('#planetButtons button').forEach(button => {
 function animate() {
     requestAnimationFrame(animate);
 
-    // Rotate each asteroid
-    scene.children.forEach(child => {
-        if (child instanceof THREE.Mesh && child.geometry instanceof THREE.DodecahedronGeometry) {
-            child.rotation.x += 0.005;
-            child.rotation.y += 0.005;
-        }
-    });
-
-    if (focusedPlanet) {
-        if (orbitEnabled) {
-            // Dynamically set orbit distance based on the size of the focused planet
-            const orbitDistance = 5 * focusedPlanet.geometry.parameters.radius; // Adjusted to use the planet's radius
-            
-            const orbitHeight = 7; // Height above or below the planet's equator
-            const time = Date.now() * 0.0007; // Continuous time variable for orbit calculation
-            
-            // Calculate new camera position for orbiting
-            const x = focusedPlanet.position.x + orbitDistance * Math.sin(time);
-            const z = focusedPlanet.position.z + orbitDistance * Math.cos(time);
-            const y = focusedPlanet.position.y + orbitHeight;
-            
-            camera.position.set(x, y, z);
-            
-        } else {
-            // Move with the planet's orbit around the sun without changing the relative position to the planet
-            const relativeCameraPosition = new THREE.Vector3().subVectors(camera.position, focusedPlanet.position);
-            const planetOrbitPosition = new THREE.Vector3(
-                Math.cos(focusedPlanet.angle) * focusedPlanet.orbitalRadius,
-                0,
-                Math.sin(focusedPlanet.angle) * focusedPlanet.orbitalRadius
-            );
-
-            camera.position.copy(planetOrbitPosition.add(relativeCameraPosition));
-        }
-        
-        camera.lookAt(focusedPlanet.position);
-        controls.target.copy(focusedPlanet.position);
-    }
-
     planets.forEach(planet => {
         planet.angle += planet.orbitalSpeed;
         planet.position.x = Math.cos(planet.angle) * planet.orbitalRadius;
         planet.position.z = Math.sin(planet.angle) * planet.orbitalRadius;
+
+        // Ensure the Earth model, if it exists, follows the sphere
+        if (planet.name === "Earth" && planet.model) {
+            planet.model.position.copy(planet.position);
+        }
     });
 
+    if (focusedPlanet) {
+        const orbitDistance = 5 * focusedPlanet.geometry.parameters.radius;
+        const orbitHeight = 7;
+        const time = Date.now() * 0.0007;
+        const x = focusedPlanet.position.x + orbitDistance * Math.sin(time);
+        const z = focusedPlanet.position.z + orbitDistance * Math.cos(time);
+        const y = focusedPlanet.position.y + orbitHeight;
+
+        camera.position.set(x, y, z);
+        camera.lookAt(focusedPlanet.position);
+        controls.target.copy(focusedPlanet.position);
+    }
+
     controls.update();
-    composer.render(scene, camera);
+    composer.render();
 }
 
 animate();
