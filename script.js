@@ -36,12 +36,12 @@ function createSkybox() {
     const skyboxGeometry = new THREE.BoxGeometry(skyboxSize, skyboxSize, skyboxSize);
     const loader = new THREE.TextureLoader();
     const materialArray = [
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide }),
-        new THREE.MeshBasicMaterial({ map: loader.load('img/front.webp'), side: THREE.BackSide })
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide }),
+        new THREE.MeshBasicMaterial({ map: loader.load('img/a.jpg'), side: THREE.BackSide })
     ];
     const skybox = new THREE.Mesh(skyboxGeometry, materialArray);
     scene.add(skybox);
@@ -52,25 +52,31 @@ const sunlight = new THREE.PointLight(0xffffff, 1, 10500);
 sunlight.position.set(0, 0, 0);
 scene.add(sunlight);
 
-const sunGeometry = new THREE.SphereGeometry(300, 200, 200);
+const sunGeometry = new THREE.SphereGeometry(800, 200, 200);
 const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFA500 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
 const solarSystemPlanets = [
-    { name: "Mercury", color: 0x909090, size: 2.9 * 3, distance: 35 * 2, orbitalSpeed: 0.004 },
-    { name: "Venus", color: 0xD3754A, size: 3 * 3, distance: 42 * 2, orbitalSpeed: 0.003 },
-    { name: "Earth", color: 0x137ADB, size: 4 * 3, distance: 54 * 2, orbitalSpeed: 0.0025 },
-    { name: "Mars", color: 0xCB4100, size: 2.8 * 3, distance: 63 * 2, orbitalSpeed: 0.002 },
-    { name: "Jupiter", color: 0xD37131, size: 11 * 3, distance: 75 * 2, orbitalSpeed: 0.001 },
-    { name: "Saturn", color: 0xDAA520, size: 9.45 * 3, distance: 85 * 2, orbitalSpeed: 0.0009 },
-    { name: "Uranus", color: 0x0D98BA, size: 5 * 3, distance: 95 * 2, orbitalSpeed: 0.0008 },
-    { name: "Neptune", color: 0x1E90FF, size: 5 * 3, distance: 110 * 2, orbitalSpeed: 0.0007 }
+    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 35 * 6, orbitalSpeed: 0.004, modelScale: 2.2 },
+    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 42 * 6, orbitalSpeed: 0.003, modelScale: 25 },
+    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 54 * 6, orbitalSpeed: 0.0025, modelScale: 0.6},
+    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 63 * 6, orbitalSpeed: 0.002, modelScale: 5},
+    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 75 * 6, orbitalSpeed: 0.001, modelScale: 1.3 },
+    { name: "Saturn", color: 0xCA8E3B, size: 9.45 * 5, distance: 85 * 6.5, orbitalSpeed: 0.0009, modelScale: 50 },
+    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 95 * 7.3, orbitalSpeed: 0.0008, modelScale: 0.2 },
+    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 110 * 7.5, orbitalSpeed: 0.0007, modelScale: 0.2 }
 ];
+
 
 
 const planetModels = {
     "Earth": "models/earth.glb",
+    "Mars": "models/mars.glb",
+    "Mercury": "models/mercury.glb",
+    "Venus": "models/venus.glb",
+    "Jupiter": "models/jupiter.glb",
+    "Saturn": "models/saturn.glb"
 };
 
 const planets = [];
@@ -97,8 +103,8 @@ function createPlanet(planetData) {
     planetMesh.position.z = Math.sin(planetMesh.angle) * planetMesh.orbitalRadius;
     scene.add(planetMesh);
 
-    // Only load the Earth model for Earth and ensure it is loaded only once
-    if (planetData.name === "Earth" && !earthModel) {
+    // Check if the current planet has a model to load
+    if (planetModels[planetData.name]) {
         loadModelAbovePlanet(planetData, planetMesh);
     }
 
@@ -109,23 +115,43 @@ function createPlanet(planetData) {
 
 function loadModelAbovePlanet(planetData, planetMesh) {
     const loader = new GLTFLoader();
-    if (planetModels[planetData.name]) {
-        loader.load(planetModels[planetData.name], (gltf) => {
-            if (earthModel) { // Check if the model already exists
-                scene.remove(earthModel); // Remove the existing model from the scene
+    loader.load(planetModels[planetData.name], (gltf) => {
+        if (planetMesh.model) {
+            scene.remove(planetMesh.model); // Prevent duplicates
+        }
+        const model = gltf.scene;
+        const scale = planetData.modelScale; // Use predefined scale
+        model.scale.set(scale, scale, scale);
+
+        // Compute the bounding sphere manually
+        model.traverse(function (node) {
+            if (node.isMesh) {
+                node.geometry.computeBoundingSphere();
             }
-            earthModel = gltf.scene;
-            adjustEarthMaterial(earthModel);
-            const scale = planetData.size * 0.02; // Adjust this scale as necessary
-            earthModel.scale.set(scale, scale, scale);
-            earthModel.position.copy(planetMesh.position);
-            scene.add(earthModel);
-            planetMesh.model = earthModel; // Attach the model directly to the mesh
-        }, undefined, (error) => {
-            console.error('Error loading model:', error);
         });
-    }
+
+        // Adjust model's position to center it correctly
+        if (planetData.name === "Saturn") {
+            const center = model.geometry.boundingSphere.center.clone().multiplyScalar(scale);
+            model.position.set(
+                planetMesh.position.x - center.x,
+                planetMesh.position.y - center.y,
+                planetMesh.position.z - center.z
+            );
+        } else {
+            model.position.copy(planetMesh.position);
+        }
+
+        scene.add(model);
+        planetMesh.model = model; // Attach model to the mesh
+        console.log(`${planetData.name} model loaded and adjusted.`);
+    }, undefined, (error) => {
+        console.error(`Error loading model for ${planetData.name}:`, error);
+    });
 }
+
+
+
 
 function adjustEarthMaterial(earthModel) {
     earthModel.traverse((child) => {
@@ -277,7 +303,7 @@ function animate() {
         planet.position.z = Math.sin(planet.angle) * planet.orbitalRadius;
 
         // Ensure the Earth model, if it exists, follows the sphere
-        if (planet.name === "Earth" && planet.model) {
+        if (planet.model) {
             planet.model.position.copy(planet.position);
         }
     });

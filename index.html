@@ -10,29 +10,11 @@
             "three": "https://unpkg.com/three@0.138.0/build/three.module.js"
         }
     }
-    </script>
-    <script id="vertexshader" type="x-shader/x-vertex">
-        varying vec2 vUv;
-    
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    </script>
-    
-    <script id="fragmentshader" type="x-shader/x-fragment">
-        uniform sampler2D baseTexture;
-        uniform sampler2D bloomTexture;
-        varying vec2 vUv;
-    
-        void main() {
-            gl_FragColor = (texture2D(baseTexture, vUv) + vec4(1.0) * texture2D(bloomTexture, vUv));
-        }
-    </script>    
+    </script> 
     <script type="module" src="script.js"></script>
 </head>
 <body>
-    <div class="buttonBarWrapper">262662
+    <div class="buttonBarWrapper">
         <div id="planetButtons" class="buttonsContainer">
             <button><a href = "index.html">Sun</a></button>
             <button id="Mercury">Mercury</button>
