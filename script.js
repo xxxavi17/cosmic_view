@@ -1,5 +1,4 @@
 import * as THREE from 'https://unpkg.com/three@0.138.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -7,11 +6,15 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders
 
 let focusedPlanet = null;
 let orbitEnabled = true;
+let cockpit, cameraPivot, throttle = 0;
+let increasingThrottle = false, decreasingThrottle = false;
+let velocity = new THREE.Vector3();
+let acceleration = new THREE.Vector3();
+let pitchVelocity = 0;
+let rollVelocity = 0;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
-camera.position.z = 7000;
-camera.position.y = 2000;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -25,11 +28,8 @@ bloomPass.strength = 0.3;
 bloomPass.radius = 0.1;
 
 const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
+composer.addPass(renderScene);
 composer.addPass(bloomPass);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableZoom = true;
 
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.17);
 hemiLight.position.set(0, 100, 0);
@@ -38,9 +38,10 @@ scene.add(hemiLight);
 const ambientLight = new THREE.AmbientLight(0x404040, 0.01);
 scene.add(ambientLight);
 
-const sunGeometry = new THREE.SphereGeometry(500, 200, 200);
-const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xFFA500 });
-const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(500, 200, 200),
+    new THREE.MeshBasicMaterial({ color: 0xFFA500 })
+);
 scene.add(sun);
 
 const sunlight = new THREE.PointLight(0xffffff, 1);
@@ -239,6 +240,13 @@ function createOrbitPath(orbitalRadius) {
     scene.add(orbit);
 }
 
+document.querySelectorAll('#planetButtons button').forEach(button => {
+    button.addEventListener('click', event => {
+        const planetName = event.target.textContent.trim();
+        focusOnPlanet(planetName);
+    });
+});
+
 function focusOnPlanet(planetName) {
     const planet = planets.find(p => p.name === planetName);
     if (!planet) {
@@ -271,17 +279,155 @@ function focusOnPlanet(planetName) {
     }
 
     document.getElementById('orbitMessage').style.display = 'block';
-
-    controls.target.copy(planet.position);
-    controls.update();
 }
 
-document.querySelectorAll('#planetButtons button').forEach(button => {
-    button.addEventListener('click', event => {
-        const planetName = event.target.textContent.trim();
-        focusOnPlanet(planetName);
-    });
+const cockpitLoader = new GLTFLoader();
+cockpitLoader.load('models/cockpit2.glb', (gltf) => {
+    cockpit = gltf.scene;
+    cockpit.scale.set(20, 20, 20);
+    cockpit.rotation.y = Math.PI;
+
+    // Create a pivot for the camera inside the cockpit
+    cameraPivot = new THREE.Object3D();
+    cockpit.add(cameraPivot);
+    cameraPivot.add(camera);
+    camera.position.set(0, 0, 0); // Position the camera inside the cockpit
+
+    // Create a soft green light above the camera
+    const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
+    greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
+    cameraPivot.add(greenLight); // Attach the light to the cameraPivot
+
+    scene.add(cockpit);
 });
+
+// Throttle display
+const throttleDisplay = document.createElement('div');
+throttleDisplay.style.position = 'absolute';
+throttleDisplay.style.top = '10px';
+throttleDisplay.style.left = '10px';
+throttleDisplay.style.color = 'white';
+throttleDisplay.style.fontSize = '24px';
+throttleDisplay.style.fontFamily = 'Arial';
+document.body.appendChild(throttleDisplay);
+
+const keyboard = {
+    pitchUp: false,
+    pitchDown: false,
+    rollLeft: false,
+    rollRight: false,
+    throttleUp: false,
+    throttleDown: false
+};
+
+document.addEventListener('keydown', (event) => {
+    switch (event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            keyboard.pitchDown = true;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            keyboard.pitchUp = true;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            keyboard.rollLeft = true;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            keyboard.rollRight = true;
+            break;
+        case 'ShiftLeft':
+            increasingThrottle = true;
+            break;
+        case 'ControlLeft':
+            decreasingThrottle = true;
+            break;
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    switch (event.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+            keyboard.pitchDown = false;
+            break;
+        case 'KeyS':
+        case 'ArrowDown':
+            keyboard.pitchUp = false;
+            break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            keyboard.rollLeft = false;
+            break;
+        case 'KeyD':
+        case 'ArrowRight':
+            keyboard.rollRight = false;
+            break;
+        case 'ShiftLeft':
+            increasingThrottle = false;
+            break;
+        case 'ControlLeft':
+            decreasingThrottle = false;
+            break;
+    }
+});
+
+function updateCockpitMovement() {
+    if (!cockpit) return;
+
+    const deltaTime = 1 / 60; // Assuming 60 FPS
+    const pitchAcceleration = 0.1;
+    const rollAcceleration = 0.1;
+    const maxPitchVelocity = 0.03;
+    const maxRollVelocity = 0.03;
+    const pitchDamping = 0.9;
+    const rollDamping = 0.9;
+
+    if (keyboard.pitchUp) {
+        pitchVelocity = Math.min(maxPitchVelocity, pitchVelocity + pitchAcceleration * deltaTime);
+    } else if (keyboard.pitchDown) {
+        pitchVelocity = Math.max(-maxPitchVelocity, pitchVelocity - pitchAcceleration * deltaTime);
+    } else {
+        pitchVelocity *= pitchDamping;
+    }
+
+    if (keyboard.rollLeft) {
+        rollVelocity = Math.min(maxRollVelocity, rollVelocity + rollAcceleration * deltaTime);
+    } else if (keyboard.rollRight) {
+        rollVelocity = Math.max(-maxRollVelocity, rollVelocity - rollAcceleration * deltaTime);
+    } else {
+        rollVelocity *= rollDamping;
+    }
+
+    cockpit.rotateX(pitchVelocity);
+    cockpit.rotateZ(rollVelocity);
+
+    // Update throttle
+    const throttleChangeSpeed = 20; // Percentage per second
+
+    if (increasingThrottle) {
+        throttle = Math.min(100, throttle + throttleChangeSpeed * deltaTime);
+    }
+    if (decreasingThrottle) {
+        throttle = Math.max(0, throttle - throttleChangeSpeed * deltaTime);
+    }
+
+    throttleDisplay.textContent = `Throttle: ${Math.round(throttle)}%`;
+
+    // Move cockpit forward based on throttle
+    acceleration.set(0, 0, -throttle * 0.01); // Adjust acceleration as needed
+    acceleration.applyQuaternion(cockpit.quaternion);
+    velocity.add(acceleration.multiplyScalar(deltaTime));
+    velocity.multiplyScalar(0.99); // Apply damping
+    cockpit.position.add(velocity);
+
+    // Camera shake effect
+    const shakeIntensity = 0.1;
+    camera.position.x += (Math.random() - 0.5) * shakeIntensity * (throttle / 100);
+    camera.position.y += (Math.random() - 0.5) * shakeIntensity * (throttle / 100);
+}
 
 function animate() {
     requestAnimationFrame(animate);
@@ -296,20 +442,8 @@ function animate() {
         }
     });
 
-    if (focusedPlanet) {
-        const orbitDistance = 5 * focusedPlanet.geometry.parameters.radius;
-        const orbitHeight = 7;
-        const time = Date.now() * 0.0007;
-        const x = focusedPlanet.position.x + orbitDistance * Math.sin(time);
-        const z = focusedPlanet.position.z + orbitDistance * Math.cos(time);
-        const y = focusedPlanet.position.y + orbitHeight;
+    updateCockpitMovement();
 
-        camera.position.set(x, y, z);
-        camera.lookAt(focusedPlanet.position);
-        controls.target.copy(focusedPlanet.position);
-    }
-
-    controls.update();
     composer.render();
 }
 
