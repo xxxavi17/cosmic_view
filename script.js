@@ -304,34 +304,42 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     scene.add(cockpit);
 });
 
-// Load font and create HUD
 const fontLoader = new FontLoader();
-fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(loadedFont) {
+fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (loadedFont) {
     font = loadedFont;
+    createHUD();
+});
+
+function createHUD() {
+    if (!font) return;
 
     hudGroup = new THREE.Group();
-    scene.add(hudGroup);
 
-    const throttleTextGeometry = new TextGeometry('Throttle: 0%', {
+    const throttleTextGeometry = new TextGeometry(`Throttle: ${Math.round(throttle)}%`, {
         font: font,
-        size: 5,
-        height: 1,
+        size: 0.5,
+        height: 0.1,
     });
-    throttleTextMesh = new THREE.Mesh(throttleTextGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    throttleTextMesh.position.set(-15, 10, -50);
+
+    const speedTextGeometry = new TextGeometry(`Speed: ${Math.round(speed)} km/h`, {
+        font: font,
+        size: 0.5,
+        height: 0.1,
+    });
+
+    const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    throttleTextMesh = new THREE.Mesh(throttleTextGeometry, textMaterial);
+    speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
+
+    throttleTextMesh.position.set(-1, -0.5, -3);
+    speedTextMesh.position.set(-1, -1, -3);
+
     hudGroup.add(throttleTextMesh);
-
-    const speedTextGeometry = new TextGeometry('Speed: 0 km/h', {
-        font: font,
-        size: 5,
-        height: 1,
-    });
-    speedTextMesh = new THREE.Mesh(speedTextGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    speedTextMesh.position.set(-15, 0, -50);
     hudGroup.add(speedTextMesh);
 
-    camera.add(hudGroup);
-});
+    cameraPivot.add(hudGroup);
+}
 
 const keyboard = {
     pitchUp: false,
@@ -402,8 +410,8 @@ function updateCockpitMovement() {
     const deltaTime = 1 / 60; // Assuming 60 FPS
     const pitchAcceleration = 0.1;
     const rollAcceleration = 0.1;
-    const maxPitchVelocity = 0.03;
-    const maxRollVelocity = 0.03;
+    const maxPitchVelocity = 0.008;
+    const maxRollVelocity = 0.01;
     const pitchDamping = 0.9;
     const rollDamping = 0.9;
 
@@ -436,18 +444,22 @@ function updateCockpitMovement() {
         throttle = Math.max(0, throttle - throttleChangeSpeed * deltaTime);
     }
 
-    speed = throttle * 10; // Example speed calculation, adjust as needed
+    // Calculate speed based on throttle
+    const maxSpeed = 2000; // Maximum speed in km/h
+    speed = (throttle / 100) * maxSpeed;
 
+    // Update HUD text
     if (throttleTextMesh && speedTextMesh) {
         throttleTextMesh.geometry = new TextGeometry(`Throttle: ${Math.round(throttle)}%`, {
             font: font,
-            size: 5,
-            height: 1,
+            size: 0.5,
+            height: 0.1,
         });
+
         speedTextMesh.geometry = new TextGeometry(`Speed: ${Math.round(speed)} km/h`, {
             font: font,
-            size: 5,
-            height: 1,
+            size: 0.5,
+            height: 0.1,
         });
     }
 
@@ -458,24 +470,28 @@ function updateCockpitMovement() {
     velocity.multiplyScalar(0.99); // Apply damping
     cockpit.position.add(velocity);
 
-    // Camera shake effect
-    const shakeIntensity = 0.005; // Reduced shake intensity
-    const maxShakeDistance = 0.27; // Define the maximum distance the camera can shake from its initial position
+    // Camera shake effect within a limit
+    const shakeIntensity = 0.01; // Reduce shake intensity
+    const shakeLimit = 0.05; // Define shake limit
 
-    // Compute new camera position within the defined limit
-    let newCameraPosition = new THREE.Vector3(
-        (Math.random() - 0.5) * shakeIntensity * (throttle / 100),
-        (Math.random() - 0.5) * shakeIntensity * (throttle / 100),
-        0
-    );
+    const shakeX = (Math.random() - 0.5) * shakeIntensity * (throttle / 100);
+    const shakeY = (Math.random() - 0.5) * shakeIntensity * (throttle / 100);
 
-    newCameraPosition.add(cameraPivot.position); // Adjust new position based on initial position
-    newCameraPosition.clamp(
-        new THREE.Vector3(-maxShakeDistance, -maxShakeDistance, -maxShakeDistance),
-        new THREE.Vector3(maxShakeDistance, maxShakeDistance, maxShakeDistance)
-    );
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x + shakeX, -shakeLimit, shakeLimit);
+    camera.position.y = THREE.MathUtils.clamp(camera.position.y + shakeY, -shakeLimit, shakeLimit);
+}
 
-    camera.position.copy(newCameraPosition);
+let mouseX = 0;
+let mouseY = 0;
+document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+function updateCameraLook() {
+    const lookSpeed = 0.02;
+    cameraPivot.rotation.y = THREE.MathUtils.lerp(cameraPivot.rotation.y, -mouseX * Math.PI, lookSpeed);
+    cameraPivot.rotation.x = THREE.MathUtils.lerp(cameraPivot.rotation.x, mouseY * Math.PI, lookSpeed);
 }
 
 function animate() {
@@ -492,6 +508,7 @@ function animate() {
     });
 
     updateCockpitMovement();
+    updateCameraLook();
 
     composer.render();
 }
