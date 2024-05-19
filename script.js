@@ -347,25 +347,28 @@ function createHUD() {
     let textMaterial = new THREE.MeshBasicMaterial({ color: 0xC2FFC3 });
 
     // Create Throttle Text
-    let throttleTextGeometry = new TextGeometry(`Throttle: 0%`, {
+    let throttleTextGeometry = new TextGeometry(`Throttle:\n\n      0%`, {
         font: font,
-        size: 0.02,  // Adjust size here
+        size: 0.022,  // Adjust size here
         height: 0.001,  // Adjust height to be very thin
     });
     throttleTextMesh = new THREE.Mesh(throttleTextGeometry, textMaterial);
-    throttleTextMesh.position.set(-0.45, -0.3, -0.73); // Adjust position as needed
+    throttleTextMesh.position.set(-0.45, -0.265, -0.765); // Adjust position as needed
+    throttleTextMesh.rotation.x = -0.75; // Slightly inclined to match the screen
     cockpit.add(throttleTextMesh);
 
     // Create Speed Text
-    let speedTextGeometry = new TextGeometry(`Speed: 0 km/h`, {
+    let speedTextGeometry = new TextGeometry(`    Speed:\n\n0 km/h`, {
         font: font,
-        size: 0.02,  // Adjust size here
+        size: 0.03,  // Adjust size here
         height: 0.001,  // Adjust height to be very thin
     });
     speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
-    speedTextMesh.position.set(-0.09, -0.3, -0.73); // Adjust position as needed
+    speedTextMesh.position.set(-0.112, -0.25, -0.77); // Adjust position as needed
+    speedTextMesh.rotation.x = -0.7; // Slightly inclined to match the screen
     cockpit.add(speedTextMesh);
 }
+
 
 
 function updateCockpitMovement() {
@@ -416,16 +419,19 @@ function updateCockpitMovement() {
     if (throttleTextMesh && speedTextMesh) {
         throttleTextMesh.geometry.dispose();
         speedTextMesh.geometry.dispose();
-        throttleTextMesh.geometry = new TextGeometry(`Throttle: ${Math.round(throttle)}%`, {
+        throttleTextMesh.geometry = new TextGeometry(`  Throttle:\n\n     ${Math.round(throttle)} %`, {
             font: font,
-            size: 0.02,  // Ensure size matches the HUD creation
+            size: 0.022,  // Ensure size matches the HUD creation
             height: 0.001,  // Ensure height matches the HUD creation
         });
-        speedTextMesh.geometry = new TextGeometry(`Speed: ${Math.round(speed)} km/h`, {
+        throttleTextMesh.rotation.x = -0.75; // Ensure rotation matches the HUD creation
+
+        speedTextMesh.geometry = new TextGeometry(`    Speed:\n\n${Math.round(speed)}  km/h`, {
             font: font,
-            size: 0.02,  // Ensure size matches the HUD creation
+            size: 0.03,  // Ensure size matches the HUD creation
             height: 0.001,  // Ensure height matches the HUD creation
         });
+        speedTextMesh.rotation.x = -0.7; // Ensure rotation matches the HUD creation
     }
 
     // Move cockpit forward based on throttle
@@ -445,9 +451,6 @@ function updateCockpitMovement() {
     camera.position.x = THREE.MathUtils.clamp(camera.position.x + shakeX, -shakeLimit, shakeLimit);
     camera.position.y = THREE.MathUtils.clamp(camera.position.y + shakeY, -shakeLimit, shakeLimit);
 }
-
-
-
 
 let mouseX = 0;
 let mouseY = 0;
@@ -484,8 +487,3 @@ function animate() {
 }
 
 animate();
-
-
-
-
-

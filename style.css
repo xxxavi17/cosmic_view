@@ -2,17 +2,3 @@ body {
     margin: 0;
     overflow: hidden;
 }
-
-#hud {
-    position: absolute;
-    bottom: 50px; /* Adjust as needed */
-    left: 50px; /* Adjust as needed */
-    color: white;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    transform: rotateX(-30deg); /* Tilt the HUD */
-}
-
-#throttleDisplay, #speedDisplay {
-    margin: 0;
-}
