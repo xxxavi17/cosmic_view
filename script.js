@@ -7,7 +7,7 @@ import { FontLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders
 import { TextGeometry } from 'https://unpkg.com/three@0.138.0/examples/jsm/geometries/TextGeometry.js';
 
 let cockpit, cameraPivot, throttle = 0, speed = 0;
-let increasingThrottle = false, decreasingThrottle = false;
+let increasingThrottle = false, decreasingThrottle = false, braking = false;
 let velocity = new THREE.Vector3();
 let acceleration = new THREE.Vector3();
 let pitchVelocity = 0;
@@ -253,7 +253,8 @@ const keyboard = {
     rollLeft: false,
     rollRight: false,
     throttleUp: false,
-    throttleDown: false
+    throttleDown: false,
+    braking: false
 };
 
 document.addEventListener('keydown', (event) => {
@@ -277,8 +278,11 @@ document.addEventListener('keydown', (event) => {
         case 'ShiftLeft':
             increasingThrottle = true;
             break;
-        case 'ControlLeft':
+        case 'Space':
             decreasingThrottle = true;
+            break;
+        case 'KeyB':
+            keyboard.braking = true;
             break;
     }
 });
@@ -304,8 +308,11 @@ document.addEventListener('keyup', (event) => {
         case 'ShiftLeft':
             increasingThrottle = false;
             break;
-        case 'ControlLeft':
+        case 'Space':
             decreasingThrottle = false;
+            break;
+        case 'KeyB':
+            keyboard.braking = false;
             break;
     }
 });
@@ -369,15 +376,13 @@ function createHUD() {
     cockpit.add(speedTextMesh);
 }
 
-
-
 function updateCockpitMovement() {
     if (!cockpit) return;
 
     const deltaTime = 1 / 60; // Assuming 60 FPS
     const pitchAcceleration = 0.07;
     const rollAcceleration = 0.07;
-    const maxPitchVelocity = 0.008;
+    const maxPitchVelocity = 0.01;
     const maxRollVelocity = 0.015;
     const pitchDamping = 0.99;
     const rollDamping = 0.99;
@@ -402,7 +407,9 @@ function updateCockpitMovement() {
     cockpit.rotateZ(rollVelocity);
 
     // Update throttle
-    const throttleChangeSpeed = 40; // Increase the throttle change speed
+    const throttleChangeSpeed = 20; // Adjusted throttle change speed
+    const brakeDeceleration = 100; // Increased brake deceleration
+    const turnDeceleration = 10; // Deceleration when turning or pitching
 
     if (increasingThrottle) {
         throttle = Math.min(100, throttle + throttleChangeSpeed * deltaTime);
@@ -410,10 +417,20 @@ function updateCockpitMovement() {
     if (decreasingThrottle) {
         throttle = Math.max(0, throttle - throttleChangeSpeed * deltaTime);
     }
+    if (keyboard.braking) {
+        speed = Math.max(0, speed - brakeDeceleration * deltaTime);
+    }
 
     // Calculate speed based on throttle
     const maxSpeed = 2000; // Maximum speed in km/h
-    speed = (throttle / 100) * maxSpeed;
+    if (!keyboard.braking) {
+        speed += 0.03*(throttle / 100) * maxSpeed * deltaTime;
+    }
+    speed = Math.min(maxSpeed, speed); // Clamp speed to max speed
+
+    // Reduce speed when turning or pitching
+    const turnSpeedReduction = 1 - 0.04 * (Math.abs(pitchVelocity) + 0.2*Math.abs(rollVelocity));
+    speed *= turnSpeedReduction;
 
     // Update 3D Text
     if (throttleTextMesh && speedTextMesh) {
@@ -431,11 +448,11 @@ function updateCockpitMovement() {
             size: 0.03,  // Ensure size matches the HUD creation
             height: 0.001,  // Ensure height matches the HUD creation
         });
-        speedTextMesh.rotation.x = -0.7; // Ensure rotation matches the HUD creation
+        speedTextMesh.rotation.x = -0.75; // Ensure rotation matches the HUD creation
     }
 
-    // Move cockpit forward based on throttle
-    acceleration.set(0, 0, -throttle * 0.05); // Adjust acceleration as needed
+    // Move cockpit forward based on speed
+    acceleration.set(0, 0, -speed * 0.003); // Adjust acceleration as needed
     acceleration.applyQuaternion(cockpit.quaternion);
     velocity.add(acceleration.multiplyScalar(deltaTime));
     velocity.multiplyScalar(0.99); // Apply damping
@@ -487,3 +504,7 @@ function animate() {
 }
 
 animate();
+
+
+
+
