@@ -1,104 +1,18 @@
 body {
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100vh;
     overflow: hidden;
 }
 
-canvas {
-    display: block;
-}
-
-/* This wrapper centers the button container on the screen */
-.buttonBarWrapper {
-    position: fixed;
-    top: 1%;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    z-index: 10;
-}
-
-.buttonsContainer {
-    display: inline-flex;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 50px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-}
-
-.buttonsContainer button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 16px;
-    background-color: #f0f0f0;
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-/* This wrapper centers the button container on the screen */
-.buttonBarWrapper {
-    position: fixed;
-    top: 1%;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    z-index: 10;
-}
-
-.buttonsContainer {
-    
-    display: inline-flex;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 50px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-}
-
-.buttonsContainer button {
-    
-    padding: 10px 15px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 12px;
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f0f0;
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-.buttonsContainer button:hover {
-    background-color: #bbbbbb;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-
-
-#orbitMessage {
-    display: none;
-    position: fixed;
-    bottom: 5px;
-    width: 100%;
-    text-align: center;
+#hud {
+    position: absolute;
+    bottom: 50px; /* Adjust as needed */
+    left: 50px; /* Adjust as needed */
     color: white;
-    font-size: 20px;
-    animation: blink 1.5s infinite;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    transform: rotateX(-30deg); /* Tilt the HUD */
 }
 
-
-
-@keyframes blink {
-    50% {
-        opacity: 0;
-    }
+#throttleDisplay, #speedDisplay {
+    margin: 0;
 }
-
-  
-

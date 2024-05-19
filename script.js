@@ -6,15 +6,12 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders
 import { FontLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'https://unpkg.com/three@0.138.0/examples/jsm/geometries/TextGeometry.js';
 
-let focusedPlanet = null;
-let orbitEnabled = true;
 let cockpit, cameraPivot, throttle = 0, speed = 0;
 let increasingThrottle = false, decreasingThrottle = false;
 let velocity = new THREE.Vector3();
 let acceleration = new THREE.Vector3();
 let pitchVelocity = 0;
 let rollVelocity = 0;
-let font, hudGroup, throttleTextMesh, speedTextMesh;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
@@ -250,97 +247,6 @@ document.querySelectorAll('#planetButtons button').forEach(button => {
     });
 });
 
-function focusOnPlanet(planetName) {
-    const planet = planets.find(p => p.name === planetName);
-    if (!planet) {
-        console.error("Planet not found:", planetName);
-        document.getElementById('orbitMessage').style.display = 'block';
-        return;
-    }
-
-    focusedPlanet = planet;
-
-    if (orbitEnabled) {
-        const orbitDistance = 10;
-        const orbitHeight = 7;
-        const time = Date.now() * 0.001;
-
-        const x = focusedPlanet.position.x + orbitDistance * Math.sin(time);
-        const z = focusedPlanet.position.z + orbitDistance * Math.cos(time);
-        const y = focusedPlanet.position.y + orbitHeight;
-
-        camera.position.set(x, y, z);
-    } else {
-        const relativeCameraPosition = new THREE.Vector3().subVectors(camera.position, focusedPlanet.position);
-        const planetOrbitPosition = new THREE.Vector3(
-            Math.cos(focusedPlanet.angle) * focusedPlanet.orbitalRadius,
-            0,
-            Math.sin(focusedPlanet.angle) * focusedPlanet.orbitalRadius
-        );
-
-        camera.position.copy(planetOrbitPosition.add(relativeCameraPosition));
-    }
-
-    document.getElementById('orbitMessage').style.display = 'block';
-}
-
-const cockpitLoader = new GLTFLoader();
-cockpitLoader.load('models/cockpit2.glb', (gltf) => {
-    cockpit = gltf.scene;
-    cockpit.scale.set(20, 20, 20);
-    cockpit.rotation.y = Math.PI;
-
-    // Create a pivot for the camera inside the cockpit
-    cameraPivot = new THREE.Object3D();
-    cockpit.add(cameraPivot);
-    cameraPivot.add(camera);
-    camera.position.set(0, 0, 0); // Position the camera inside the cockpit
-
-    // Create a soft green light above the camera
-    const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
-    greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
-    cameraPivot.add(greenLight); // Attach the light to the cameraPivot
-
-    scene.add(cockpit);
-});
-
-const fontLoader = new FontLoader();
-fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (loadedFont) {
-    font = loadedFont;
-    createHUD();
-});
-
-function createHUD() {
-    if (!font) return;
-
-    hudGroup = new THREE.Group();
-
-    const throttleTextGeometry = new TextGeometry(`Throttle: ${Math.round(throttle)}%`, {
-        font: font,
-        size: 0.5,
-        height: 0.1,
-    });
-
-    const speedTextGeometry = new TextGeometry(`Speed: ${Math.round(speed)} km/h`, {
-        font: font,
-        size: 0.5,
-        height: 0.1,
-    });
-
-    const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-    throttleTextMesh = new THREE.Mesh(throttleTextGeometry, textMaterial);
-    speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
-
-    throttleTextMesh.position.set(-1, -0.5, -3);
-    speedTextMesh.position.set(-1, -1, -3);
-
-    hudGroup.add(throttleTextMesh);
-    hudGroup.add(speedTextMesh);
-
-    cameraPivot.add(hudGroup);
-}
-
 const keyboard = {
     pitchUp: false,
     pitchDown: false,
@@ -404,16 +310,74 @@ document.addEventListener('keyup', (event) => {
     }
 });
 
+const cockpitLoader = new GLTFLoader();
+cockpitLoader.load('models/cockpit2.glb', (gltf) => {
+    cockpit = gltf.scene;
+    cockpit.scale.set(20, 20, 20);
+    cockpit.rotation.y = Math.PI;
+
+    // Create a pivot for the camera inside the cockpit
+    cameraPivot = new THREE.Object3D();
+    cockpit.add(cameraPivot);
+    cameraPivot.add(camera);
+    camera.position.set(0, 0, 0); // Position the camera inside the cockpit
+
+    // Create a soft green light above the camera
+    const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
+    greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
+    cameraPivot.add(greenLight); // Attach the light to the cameraPivot
+
+    scene.add(cockpit);
+
+    // Load the font and create HUD after cockpit is loaded
+    fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (loadedFont) {
+        font = loadedFont;
+        createHUD();
+    });
+});
+
+
+let fontLoader = new FontLoader();
+let font;
+let throttleTextMesh, speedTextMesh;
+
+function createHUD() {
+    if (!cockpit) return; // Ensure cockpit is loaded
+
+    let textMaterial = new THREE.MeshBasicMaterial({ color: 0xC2FFC3 });
+
+    // Create Throttle Text
+    let throttleTextGeometry = new TextGeometry(`Throttle: 0%`, {
+        font: font,
+        size: 0.02,  // Adjust size here
+        height: 0.001,  // Adjust height to be very thin
+    });
+    throttleTextMesh = new THREE.Mesh(throttleTextGeometry, textMaterial);
+    throttleTextMesh.position.set(-0.45, -0.3, -0.73); // Adjust position as needed
+    cockpit.add(throttleTextMesh);
+
+    // Create Speed Text
+    let speedTextGeometry = new TextGeometry(`Speed: 0 km/h`, {
+        font: font,
+        size: 0.02,  // Adjust size here
+        height: 0.001,  // Adjust height to be very thin
+    });
+    speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
+    speedTextMesh.position.set(-0.09, -0.3, -0.73); // Adjust position as needed
+    cockpit.add(speedTextMesh);
+}
+
+
 function updateCockpitMovement() {
     if (!cockpit) return;
 
     const deltaTime = 1 / 60; // Assuming 60 FPS
-    const pitchAcceleration = 0.1;
-    const rollAcceleration = 0.1;
+    const pitchAcceleration = 0.07;
+    const rollAcceleration = 0.07;
     const maxPitchVelocity = 0.008;
-    const maxRollVelocity = 0.01;
-    const pitchDamping = 0.9;
-    const rollDamping = 0.9;
+    const maxRollVelocity = 0.015;
+    const pitchDamping = 0.99;
+    const rollDamping = 0.99;
 
     if (keyboard.pitchUp) {
         pitchVelocity = Math.min(maxPitchVelocity, pitchVelocity + pitchAcceleration * deltaTime);
@@ -448,30 +412,31 @@ function updateCockpitMovement() {
     const maxSpeed = 2000; // Maximum speed in km/h
     speed = (throttle / 100) * maxSpeed;
 
-    // Update HUD text
+    // Update 3D Text
     if (throttleTextMesh && speedTextMesh) {
+        throttleTextMesh.geometry.dispose();
+        speedTextMesh.geometry.dispose();
         throttleTextMesh.geometry = new TextGeometry(`Throttle: ${Math.round(throttle)}%`, {
             font: font,
-            size: 0.5,
-            height: 0.1,
+            size: 0.02,  // Ensure size matches the HUD creation
+            height: 0.001,  // Ensure height matches the HUD creation
         });
-
         speedTextMesh.geometry = new TextGeometry(`Speed: ${Math.round(speed)} km/h`, {
             font: font,
-            size: 0.5,
-            height: 0.1,
+            size: 0.02,  // Ensure size matches the HUD creation
+            height: 0.001,  // Ensure height matches the HUD creation
         });
     }
 
     // Move cockpit forward based on throttle
-    acceleration.set(0, 0, -throttle * 0.01); // Adjust acceleration as needed
+    acceleration.set(0, 0, -throttle * 0.05); // Adjust acceleration as needed
     acceleration.applyQuaternion(cockpit.quaternion);
     velocity.add(acceleration.multiplyScalar(deltaTime));
     velocity.multiplyScalar(0.99); // Apply damping
     cockpit.position.add(velocity);
 
     // Camera shake effect within a limit
-    const shakeIntensity = 0.01; // Reduce shake intensity
+    const shakeIntensity = 0.008; // Reduce shake intensity
     const shakeLimit = 0.05; // Define shake limit
 
     const shakeX = (Math.random() - 0.5) * shakeIntensity * (throttle / 100);
@@ -481,17 +446,22 @@ function updateCockpitMovement() {
     camera.position.y = THREE.MathUtils.clamp(camera.position.y + shakeY, -shakeLimit, shakeLimit);
 }
 
+
+
+
 let mouseX = 0;
 let mouseY = 0;
+
 document.addEventListener('mousemove', (event) => {
     mouseX = (event.clientX / window.innerWidth) * 2 - 1;
     mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
 function updateCameraLook() {
-    const lookSpeed = 0.02;
-    cameraPivot.rotation.y = THREE.MathUtils.lerp(cameraPivot.rotation.y, -mouseX * Math.PI, lookSpeed);
-    cameraPivot.rotation.x = THREE.MathUtils.lerp(cameraPivot.rotation.x, mouseY * Math.PI, lookSpeed);
+    if (!cameraPivot) return; // Ensure cameraPivot is defined
+    const lookSpeed = 0.03;
+    cameraPivot.rotation.y = THREE.MathUtils.lerp(cameraPivot.rotation.y, -mouseX * Math.PI / 3, lookSpeed);
+    cameraPivot.rotation.x = THREE.MathUtils.lerp(cameraPivot.rotation.x, mouseY * Math.PI / 3, lookSpeed);
 }
 
 function animate() {
@@ -514,3 +484,8 @@ function animate() {
 }
 
 animate();
+
+
+
+
+
