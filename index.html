@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Cosmic View</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Abel&display=swap');
+        </style>
     <script type="importmap">
     {
         "imports": {
@@ -14,6 +17,16 @@
     <script type="module" src="script.js"></script>
 </head>
 <body>
+    <div id="loading-screen">
+        <div id="loading-content">
+            <h1 id="title" class="Abel">Cosmic View</h1>
+            <div id="loading-bar-container">
+                <div id="loading-bar"></div>
+            </div>
+            <div id="loading-text">Loading...</div> <!-- Add this line -->
+            <div id="continue-text" class="hidden">Press Enter to continue...</div>
+        </div>
+    </div>
 </body>
 </html>
 
