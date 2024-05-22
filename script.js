@@ -45,7 +45,7 @@ sunlight.position.set(0, 0, 0);
 scene.add(sunlight);
 
 function createSphereSkybox() {
-    const skyboxRadius = 9000000; // Adjust size as necessary
+    const skyboxRadius = 15999000; // Adjust size as necessary
     const skyboxGeometry = new THREE.SphereGeometry(skyboxRadius, 64, 64);
     const loader = new THREE.TextureLoader();
     const skyboxMaterial = new THREE.MeshBasicMaterial({
@@ -67,18 +67,18 @@ createSphereSkybox();
 
 // Adjust camera's near and far planes to handle larger scales better
 camera.near = 0.1;
-camera.far = 500000;
+camera.far = 9500000;
 camera.updateProjectionMatrix();
 
 const solarSystemPlanets = [
-    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 200000, orbitalSpeed: 0.0004, modelScale: 3 * 600 },
-    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 260000, orbitalSpeed: 0.0003, modelScale: 40* 600 },
-    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 360000, orbitalSpeed: 0.00025, modelScale: 80 * 600 },
-    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 430000, orbitalSpeed: 0.0002, modelScale: 60 * 600 },
-    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 520000, orbitalSpeed: 0.0001, modelScale: 1.5 * 600 },
-    { name: "Saturn", color: 0xCA8E3B, size: 6500 * 5, distance: 620000, orbitalSpeed: 0.00009, modelScale: 0 * 600 },
-    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 750000, orbitalSpeed: 0.00008, modelScale: 0.11 * 600 },
-    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 850000, orbitalSpeed: 0.00007, modelScale: 0.35 * 600 }
+    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 190000, orbitalSpeed: 0.0006, modelScale: 2 * 900 },
+    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 250000, orbitalSpeed: 0.0005, modelScale: 27 * 900 },
+    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 350000, orbitalSpeed: 0.00035, modelScale: 70 * 900 },
+    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 400000, orbitalSpeed: 0.0004, modelScale: 55 * 900},
+    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 500000, orbitalSpeed: 0.0002, modelScale: 1.5 * 700},
+    { name: "Saturn", color: 0xCA8E3B, size: 7000 * 5, distance: 600000, orbitalSpeed: 0.00015, modelScale: 0 * 400 },
+    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 720000, orbitalSpeed: 0.0001, modelScale: 0.11 * 800 },
+    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 820000, orbitalSpeed: 0.0001, modelScale: 0.3 * 700 }
 ];
 
 const planetModels = {
@@ -105,7 +105,7 @@ totalModels++; // Increase the total number of models to load
 sunLoader.load('models/sun.glb', function (gltf) {
     const sunModel = gltf.scene;
     sunModel.position.set(0, 0, 0);
-    sunModel.scale.set(50000, 50000, 50000);
+    sunModel.scale.set(42000, 42000, 42000);
     scene.add(sunModel);
     sunlight.target = sunModel;
     modelLoaded(); // Call modelLoaded when the model is successfully loaded
@@ -198,7 +198,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 5500;
+        const particleSize = (Math.random() * 0.2 + 0.1) * 2500;
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -329,14 +329,14 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     cameraPivot = new THREE.Object3D();
     cockpit.add(cameraPivot);
     cameraPivot.add(camera);
-    camera.position.set(0, 1, 0); // Position the camera inside the cockpit
+    camera.position.set(0, 0, 0); // Position the camera inside the cockpit
 
     const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
     greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
     cameraPivot.add(greenLight); // Attach the light to the cameraPivot
 
     // Set the initial position of the cockpit above the sun
-    cockpit.position.set(5450000, 4455000, 860000); // Adjust the height as necessary to position above the sun
+    cockpit.position.set(2450000, 5985000, 4300000); // Adjust the height as necessary to position above the sun
     
     scene.add(cockpit);
 
@@ -352,7 +352,7 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     spaceshipLoader.load('models/spaceship.glb', (gltf) => {
         spaceship = gltf.scene;
         spaceship.scale.set(15250, 15250, 15250); // Adjust the scale as necessary
-        spaceship.position.set(5500000, 4500000, 950000); // Place the spaceship at a fixed position
+        spaceship.position.set(2450000, 6005000, 4380000); // Place the spaceship at a fixed position
         spaceship.rotation.set(0.5, 0.5, 0.5); // Adjust the rotation as necessary
         scene.add(spaceship);
         modelLoaded(); // Call modelLoaded when the spaceship is successfully loaded
@@ -363,7 +363,7 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
 
 let fontLoader = new FontLoader();
 let font;
-let throttleTextMesh, speedTextMesh;
+let throttleTextMesh, speedTextMesh, presentationTextMesh, controlsTextMesh;
 
 function createHUD() {
     if (!cockpit) return; // Ensure cockpit is loaded
@@ -391,6 +391,32 @@ function createHUD() {
     speedTextMesh.position.set(-0.112, -0.25, -0.77); // Adjust position as needed
     speedTextMesh.rotation.x = -0.7; // Slightly inclined to match the screen
     cockpit.add(speedTextMesh);
+
+    // Create Presentation Text
+    let presentationTextGeometry = new TextGeometry(`    XAVI's\nSpaceship\n\nICG Project`, {
+        font: font,
+        size: 0.0095,  // Adjust size here
+        height: 0.001,  // Adjust height to be very thin
+    });
+    presentationTextMesh = new THREE.Mesh(presentationTextGeometry, textMaterial);
+    presentationTextMesh.position.set(-0.35, -0.32, -0.45); // Adjust position as needed
+    presentationTextMesh.rotation.x = -0.68; // Slightly inclined to match the screen
+    presentationTextMesh.rotation.y = 0.5; // Slightly inclined to match the screen
+    presentationTextMesh.rotation.z = -0.29; // Slightly inclined to match the screen
+    cockpit.add(presentationTextMesh);
+
+    // Create Controls Text
+    let controlsTextGeometry = new TextGeometry(`Controls:\nW/S: Pitch\nA/D: Roll\nShift: + Throttle\nSpace: - Throttle\nB: Brake`, {
+        font: font,
+        size: 0.0145,  // Adjust size here
+        height: 0.001,  // Adjust height to be very thin
+    });
+    controlsTextMesh = new THREE.Mesh(controlsTextGeometry, textMaterial);
+    controlsTextMesh.position.set(0.33, -0.355, -0.4703); // Adjust position as needed
+    controlsTextMesh.rotation.x = -0.68; // Slightly inclined to match the screen
+    controlsTextMesh.rotation.y = -0.4; // Slightly inclined to match the screen
+    controlsTextMesh.rotation.z = 0.25; // Slightly inclined to match the screen
+    cockpit.add(controlsTextMesh);
 }
 
 function updateCockpitMovement() {
@@ -424,7 +450,7 @@ function updateCockpitMovement() {
     cockpit.rotateZ(rollVelocity);
 
     // Update throttle
-    const throttleChangeSpeed = 15; // Adjusted throttle change speed
+    const throttleChangeSpeed = 20; // Adjusted throttle change speed
     const brakeDeceleration = 50000; // Increased brake deceleration
     const turnDeceleration = 100; // Deceleration when turning or pitching
 
@@ -579,6 +605,4 @@ function animate() {
 }
 
 renderer.setAnimationLoop(null);
-
-
 
