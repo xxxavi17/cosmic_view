@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/GLTFLoader.js';
 import { FontLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'https://unpkg.com/three@0.138.0/examples/jsm/geometries/TextGeometry.js';
 
 let loadingComplete = false;
-let cockpit, cameraPivot, throttle = 0, speed = 0;
+let cockpit, spaceship, cameraPivot, throttle = 0, speed = 0;
 let increasingThrottle = false, decreasingThrottle = false, braking = false;
 let velocity = new THREE.Vector3();
 let acceleration = new THREE.Vector3();
@@ -70,14 +71,14 @@ camera.far = 500000;
 camera.updateProjectionMatrix();
 
 const solarSystemPlanets = [
-    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 100000, orbitalSpeed: 0.0004, modelScale: 2.2*350 },
-    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 130000, orbitalSpeed: 0.0003, modelScale: 25*350 },
-    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 165000, orbitalSpeed: 0.00025, modelScale: 55*350 },
-    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 185000, orbitalSpeed: 0.0002, modelScale: 50*350 },
-    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 230000, orbitalSpeed: 0.0001, modelScale: 1.3*350 },
-    { name: "Saturn", color: 0xCA8E3B, size: 5000 * 5, distance: 260000, orbitalSpeed: 0.00009, modelScale: 1*350 },
-    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 300000, orbitalSpeed: 0.00008, modelScale: 0.1*350 },
-    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 340000, orbitalSpeed: 0.00007, modelScale: 0.15*350 }
+    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 80000, orbitalSpeed: 0.0004, modelScale: 1.5 * 500 },
+    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 130000, orbitalSpeed: 0.0003, modelScale: 3 * 500 },
+    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 170000, orbitalSpeed: 0.00025, modelScale: 60 * 500 },
+    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 200000, orbitalSpeed: 0.0002, modelScale: 55 * 500 },
+    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 280000, orbitalSpeed: 0.0001, modelScale: 1.5 * 500 },
+    { name: "Saturn", color: 0xCA8E3B, size: 6000 * 5, distance: 340000, orbitalSpeed: 0.00009, modelScale: 0 * 400 },
+    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 400000, orbitalSpeed: 0.00008, modelScale: 0.11 * 500 },
+    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 460000, orbitalSpeed: 0.00007, modelScale: 0.3 * 500 }
 ];
 
 const planetModels = {
@@ -93,7 +94,6 @@ const planetModels = {
 
 const planets = [];
 let saturnRingsGroup = null;
-
 solarSystemPlanets.forEach(planetData => {
     totalModels++; // Increase the total number of models to load
     const planet = createPlanet(planetData);
@@ -102,14 +102,14 @@ solarSystemPlanets.forEach(planetData => {
 
 const sunLoader = new GLTFLoader();
 totalModels++; // Increase the total number of models to load
-sunLoader.load('models/sun.glb', function(gltf) {
+sunLoader.load('models/sun.glb', function (gltf) {
     const sunModel = gltf.scene;
     sunModel.position.set(0, 0, 0);
     sunModel.scale.set(15000, 15000, 15000);
     scene.add(sunModel);
     sunlight.target = sunModel;
     modelLoaded(); // Call modelLoaded when the model is successfully loaded
-}, undefined, function(error) {
+}, undefined, function (error) {
     console.error('An error happened loading the sun model:', error);
 });
 
@@ -140,7 +140,6 @@ function createPlanet(planetData) {
     if (planetData.name === "Saturn") {
         createSaturnRings(planetMesh);
     }
-
     createOrbitPath(planetMesh.orbitalRadius);
     return planetMesh;
 }
@@ -204,7 +203,7 @@ function createSaturnRings(saturn) {
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
         const asteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
-        
+
         asteroid.position.x = Math.cos(theta) * distanceFromPlanet;
         asteroid.position.z = Math.sin(theta) * distanceFromPlanet;
         asteroid.position.y = (Math.random() - 0.5) * particleSize * 2;
@@ -236,7 +235,6 @@ function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
 
     return ringMesh;
 }
-
 function createOrbitPath(orbitalRadius) {
     const orbitPoints = [];
     for (let i = 0; i <= 5000; i++) {
@@ -291,7 +289,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-
 document.addEventListener('keyup', (event) => {
     switch (event.code) {
         case 'KeyW':
@@ -332,18 +329,35 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     cameraPivot = new THREE.Object3D();
     cockpit.add(cameraPivot);
     cameraPivot.add(camera);
-    camera.position.set(0, 0, 0); // Position the camera inside the cockpit
+    camera.position.set(0, 0, -5); // Position the camera inside the cockpit
 
     const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
     greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
     cameraPivot.add(greenLight); // Attach the light to the cameraPivot
 
+    // Set the initial position of the cockpit above the sun
+    cockpit.position.set(1450000, 2555000, 960000); // Adjust the height as necessary to position above the sun
+    
     scene.add(cockpit);
 
     fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (loadedFont) {
         font = loadedFont;
         createHUD();
         modelLoaded(); // Call modelLoaded when the cockpit and HUD are successfully loaded
+    });
+
+    // Load the spaceship model
+    const spaceshipLoader = new GLTFLoader();
+    totalModels++; // Increase the total number of models to load
+    spaceshipLoader.load('models/spaceship.glb', (gltf) => {
+        spaceship = gltf.scene;
+        spaceship.scale.set(15250, 15250, 15250); // Adjust the scale as necessary
+        spaceship.position.set(1500000, 2600000, 1050000); // Place the spaceship at a fixed position
+        spaceship.rotation.set(0.5, 0.5, 0.5); // Adjust the rotation as necessary
+        scene.add(spaceship);
+        modelLoaded(); // Call modelLoaded when the spaceship is successfully loaded
+    }, undefined, function (error) {
+        console.error('An error happened loading the spaceship model:', error);
     });
 });
 
@@ -368,7 +382,7 @@ function createHUD() {
     cockpit.add(throttleTextMesh);
 
     // Create Speed Text
-    let speedTextGeometry = new TextGeometry(`    Speed:\n\n0 km/s`, {
+    let speedTextGeometry = new TextGeometry(`    Speed:\n\n0 km/h`, {
         font: font,
         size: 0.03,  // Adjust size here
         height: 0.001,  // Adjust height to be very thin
@@ -385,8 +399,8 @@ function updateCockpitMovement() {
     const deltaTime = 1 / 60; // Assuming 60 FPS
     const pitchAcceleration = 0.02;
     const rollAcceleration = 0.03;
-    const maxPitchVelocity = 0.007;
-    const maxRollVelocity = 0.01;
+    const maxPitchVelocity = 0.009;
+    const maxRollVelocity = 0.015;
     const pitchDamping = 0.99;
     const rollDamping = 0.99;
 
@@ -410,8 +424,8 @@ function updateCockpitMovement() {
     cockpit.rotateZ(rollVelocity);
 
     // Update throttle
-    const throttleChangeSpeed = 20; // Adjusted throttle change speed
-    const brakeDeceleration = 10000; // Increased brake deceleration
+    const throttleChangeSpeed = 10; // Adjusted throttle change speed
+    const brakeDeceleration = 50000; // Increased brake deceleration
     const turnDeceleration = 100; // Deceleration when turning or pitching
 
     if (increasingThrottle) {
@@ -425,7 +439,7 @@ function updateCockpitMovement() {
     }
 
     // Calculate speed based on throttle
-    const maxSpeed = 99999; // Maximum speed in km/s
+    const maxSpeed = 599999; // Maximum speed in km/h
     if (!keyboard.braking) {
         speed += 0.05 * (throttle / 100) * maxSpeed * deltaTime;
     }
@@ -446,7 +460,9 @@ function updateCockpitMovement() {
         });
         throttleTextMesh.rotation.x = -0.75; // Ensure rotation matches the HUD creation
 
-        speedTextMesh.geometry = new TextGeometry(`    Speed:\n\n${Math.round(speed)}  km/s`, {
+        // Scale speed for display
+        const displaySpeed = (speed / maxSpeed) * 9999;
+        speedTextMesh.geometry = new TextGeometry(`    Speed:\n\n${Math.round(displaySpeed)}  km/h`, {
             font: font,
             size: 0.03,  // Ensure size matches the HUD creation
             height: 0.001,  // Ensure height matches the HUD creation
@@ -482,11 +498,11 @@ function updateCockpitMovement() {
     } else {
         camera.position.z = THREE.MathUtils.lerp(camera.position.z, 0, 0.1);
     }
+
+    // Implementing camera movement based on pitch velocity
+    const pitchInertiaIntensity = 0.005; // Adjust the intensity of the pitch inertia effect
+    camera.position.y = THREE.MathUtils.lerp(camera.position.y, -pitchVelocity * pitchInertiaIntensity * speed / 150, 0.1);
 }
-
-
-
-
 
 let mouseX = 0;
 let mouseY = 0;
@@ -498,7 +514,7 @@ document.addEventListener('mousemove', (event) => {
 
 function updateCameraLook() {
     if (!cameraPivot) return; // Ensure cameraPivot is defined
-    const lookSpeed = 0.03;
+    const lookSpeed = 0.04;
     cameraPivot.rotation.y = THREE.MathUtils.lerp(cameraPivot.rotation.y, -mouseX * Math.PI / 3, lookSpeed);
     cameraPivot.rotation.x = THREE.MathUtils.lerp(cameraPivot.rotation.x, mouseY * Math.PI / 3, lookSpeed);
 }
@@ -513,8 +529,6 @@ const loadingBar = document.getElementById('loading-bar');
 const continueText = document.getElementById('continue-text');
 const loadingText = document.getElementById('loading-text');
 const subtitle = document.getElementById('subtitle');
-
-
 
 // Function to update the loading progress
 function updateLoadingProgress() {
@@ -538,31 +552,6 @@ function startGame() {
         loadingScreen.style.display = 'none';
         animate();
     }, 1000); // 1-second fade-out transition
-}
-
-function showSubtitles() {
-    const subtitles = [
-        "It's recommended to play in fullscreen by pressing F11",
-        "This game is heavy and consumes a lot of resources",
-        "It's recommended to adjust your PC to a high performance level and plug-in the charger if it is a laptop",
-        "Enjoy this cosmic experience !"
-    ];
-
-    let currentSubtitle = 0;
-
-    function showNextSubtitle() {
-        if (currentSubtitle < subtitles.length) {
-            subtitle.textContent = subtitles[currentSubtitle];
-            currentSubtitle++;
-            setTimeout(showNextSubtitle, 5000);
-        } else {
-            subtitle.style.display = 'none'; // Hide the subtitle
-            document.getElementById('loading-bar-container').classList.remove('hidden'); // Show loading bar
-            document.getElementById('loading-text').classList.remove('hidden'); // Show loading text
-        }
-    }
-
-    showNextSubtitle();
 }
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -590,3 +579,6 @@ function animate() {
 }
 
 renderer.setAnimationLoop(null);
+
+
+
