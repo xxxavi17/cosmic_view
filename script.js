@@ -45,7 +45,7 @@ sunlight.position.set(0, 0, 0);
 scene.add(sunlight);
 
 function createSphereSkybox() {
-    const skyboxRadius = 3500000; // Adjust size as necessary
+    const skyboxRadius = 9000000; // Adjust size as necessary
     const skyboxGeometry = new THREE.SphereGeometry(skyboxRadius, 64, 64);
     const loader = new THREE.TextureLoader();
     const skyboxMaterial = new THREE.MeshBasicMaterial({
@@ -71,14 +71,14 @@ camera.far = 500000;
 camera.updateProjectionMatrix();
 
 const solarSystemPlanets = [
-    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 80000, orbitalSpeed: 0.0004, modelScale: 1.5 * 500 },
-    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 130000, orbitalSpeed: 0.0003, modelScale: 3 * 500 },
-    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 170000, orbitalSpeed: 0.00025, modelScale: 60 * 500 },
-    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 200000, orbitalSpeed: 0.0002, modelScale: 55 * 500 },
-    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 280000, orbitalSpeed: 0.0001, modelScale: 1.5 * 500 },
-    { name: "Saturn", color: 0xCA8E3B, size: 6000 * 5, distance: 340000, orbitalSpeed: 0.00009, modelScale: 0 * 400 },
-    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 400000, orbitalSpeed: 0.00008, modelScale: 0.11 * 500 },
-    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 460000, orbitalSpeed: 0.00007, modelScale: 0.3 * 500 }
+    { name: "Mercury", color: 0x909090, size: 2.9 * 5, distance: 200000, orbitalSpeed: 0.0004, modelScale: 3 * 600 },
+    { name: "Venus", color: 0xD3754A, size: 3 * 5, distance: 260000, orbitalSpeed: 0.0003, modelScale: 40* 600 },
+    { name: "Earth", color: 0x137ADB, size: 4 * 5, distance: 360000, orbitalSpeed: 0.00025, modelScale: 80 * 600 },
+    { name: "Mars", color: 0xCB4100, size: 2.8 * 5, distance: 430000, orbitalSpeed: 0.0002, modelScale: 60 * 600 },
+    { name: "Jupiter", color: 0xD37131, size: 11 * 5, distance: 520000, orbitalSpeed: 0.0001, modelScale: 1.5 * 600 },
+    { name: "Saturn", color: 0xCA8E3B, size: 6500 * 5, distance: 620000, orbitalSpeed: 0.00009, modelScale: 0 * 600 },
+    { name: "Uranus", color: 0x0D98BA, size: 5 * 5, distance: 750000, orbitalSpeed: 0.00008, modelScale: 0.11 * 600 },
+    { name: "Neptune", color: 0x1E90FF, size: 5 * 5, distance: 850000, orbitalSpeed: 0.00007, modelScale: 0.35 * 600 }
 ];
 
 const planetModels = {
@@ -105,7 +105,7 @@ totalModels++; // Increase the total number of models to load
 sunLoader.load('models/sun.glb', function (gltf) {
     const sunModel = gltf.scene;
     sunModel.position.set(0, 0, 0);
-    sunModel.scale.set(15000, 15000, 15000);
+    sunModel.scale.set(50000, 50000, 50000);
     scene.add(sunModel);
     sunlight.target = sunModel;
     modelLoaded(); // Call modelLoaded when the model is successfully loaded
@@ -198,7 +198,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 1500;
+        const particleSize = (Math.random() * 0.2 + 0.1) * 5500;
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -329,14 +329,14 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     cameraPivot = new THREE.Object3D();
     cockpit.add(cameraPivot);
     cameraPivot.add(camera);
-    camera.position.set(0, 0, -5); // Position the camera inside the cockpit
+    camera.position.set(0, 1, 0); // Position the camera inside the cockpit
 
     const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
     greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
     cameraPivot.add(greenLight); // Attach the light to the cameraPivot
 
     // Set the initial position of the cockpit above the sun
-    cockpit.position.set(1450000, 2555000, 960000); // Adjust the height as necessary to position above the sun
+    cockpit.position.set(5450000, 4455000, 860000); // Adjust the height as necessary to position above the sun
     
     scene.add(cockpit);
 
@@ -352,7 +352,7 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     spaceshipLoader.load('models/spaceship.glb', (gltf) => {
         spaceship = gltf.scene;
         spaceship.scale.set(15250, 15250, 15250); // Adjust the scale as necessary
-        spaceship.position.set(1500000, 2600000, 1050000); // Place the spaceship at a fixed position
+        spaceship.position.set(5500000, 4500000, 950000); // Place the spaceship at a fixed position
         spaceship.rotation.set(0.5, 0.5, 0.5); // Adjust the rotation as necessary
         scene.add(spaceship);
         modelLoaded(); // Call modelLoaded when the spaceship is successfully loaded
@@ -424,7 +424,7 @@ function updateCockpitMovement() {
     cockpit.rotateZ(rollVelocity);
 
     // Update throttle
-    const throttleChangeSpeed = 10; // Adjusted throttle change speed
+    const throttleChangeSpeed = 15; // Adjusted throttle change speed
     const brakeDeceleration = 50000; // Increased brake deceleration
     const turnDeceleration = 100; // Deceleration when turning or pitching
 
