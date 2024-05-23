@@ -14,8 +14,12 @@ let velocity = new THREE.Vector3();
 let acceleration = new THREE.Vector3();
 let pitchVelocity = 0;
 let rollVelocity = 0;
+let yawVelocity = 0;
 let modelsLoaded = 0;
 let totalModels = 0;
+let backgroundMusic; // Define the backgroundMusic variable
+
+const yawInertiaIntensity = 0.01; // Adjust the intensity of the yaw inertia effect
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
@@ -198,7 +202,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 2500;
+        const particleSize = (Math.random() * 0.2 + 0.1) * 5500;
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -253,7 +257,9 @@ const keyboard = {
     rollRight: false,
     throttleUp: false,
     throttleDown: false,
-    braking: false
+    braking: false,
+    yawLeft: false,
+    yawRight: false
 };
 
 document.addEventListener('keydown', (event) => {
@@ -274,16 +280,16 @@ document.addEventListener('keydown', (event) => {
         case 'ArrowRight':
             keyboard.rollRight = true;
             break;
-        case 'ShiftLeft':
-            increasingThrottle = true;
+        case 'KeyQ':
+            keyboard.yawLeft = true;
             break;
-        case 'Space':
-            decreasingThrottle = true; // Decrease throttle if game is already started
+        case 'KeyE':
+            keyboard.yawRight = true;
             break;
         case 'Enter':
             if (loadingComplete) startGame();
             break;
-        case 'KeyB':
+        case 'Space':
             keyboard.braking = true;
             break;
     }
@@ -307,15 +313,27 @@ document.addEventListener('keyup', (event) => {
         case 'ArrowRight':
             keyboard.rollRight = false;
             break;
-        case 'ShiftLeft':
-            increasingThrottle = false;
+        case 'KeyQ':
+            keyboard.yawLeft = false;
+            break;
+        case 'KeyE':
+            keyboard.yawRight = false;
             break;
         case 'Space':
-            decreasingThrottle = false;
-            break;
-        case 'KeyB':
             keyboard.braking = false;
             break;
+    }
+});
+
+document.addEventListener('wheel', (event) => {
+    const throttleChangeSpeed = 2; // Adjust the throttle change speed based on scroll
+
+    if (event.deltaY < 0) {
+        // Scrolling up
+        throttle = Math.min(100, throttle + throttleChangeSpeed);
+    } else if (event.deltaY > 0) {
+        // Scrolling down
+        throttle = Math.max(0, throttle - throttleChangeSpeed);
     }
 });
 
@@ -381,15 +399,15 @@ function createHUD() {
     throttleTextMesh.rotation.x = -0.75; // Slightly inclined to match the screen
     cockpit.add(throttleTextMesh);
 
-    // Create Speed Text
+    // Speed Display
     let speedTextGeometry = new TextGeometry(`    Speed:\n\n0 km/h`, {
         font: font,
-        size: 0.03,  // Adjust size here
-        height: 0.001,  // Adjust height to be very thin
+        size: 0.03,     // tamanho
+        height: 0.001,  // espessura
     });
     speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
-    speedTextMesh.position.set(-0.112, -0.25, -0.77); // Adjust position as needed
-    speedTextMesh.rotation.x = -0.7; // Slightly inclined to match the screen
+    speedTextMesh.position.set(-0.112, -0.25, -0.77); // posição
+    speedTextMesh.rotation.x = -0.7; // inclinação para a frente
     cockpit.add(speedTextMesh);
 
     // Create Presentation Text
@@ -406,7 +424,7 @@ function createHUD() {
     cockpit.add(presentationTextMesh);
 
     // Create Controls Text
-    let controlsTextGeometry = new TextGeometry(`Controls:\nW/S: Pitch\nA/D: Roll\nShift: + Throttle\nSpace: - Throttle\nB: Brake`, {
+    let controlsTextGeometry = new TextGeometry(`Controls:\nQ/E-------------Yaw\nW/S------------Pitch\nA/D--------------Roll\nScrool------Throttle\nSpace--------Brake`, {
         font: font,
         size: 0.0145,  // Adjust size here
         height: 0.001,  // Adjust height to be very thin
@@ -425,10 +443,13 @@ function updateCockpitMovement() {
     const deltaTime = 1 / 60; // Assuming 60 FPS
     const pitchAcceleration = 0.02;
     const rollAcceleration = 0.03;
+    const yawAcceleration = 0.02; // Yaw acceleration
     const maxPitchVelocity = 0.009;
     const maxRollVelocity = 0.015;
+    const maxYawVelocity = 0.009; // Max yaw velocity
     const pitchDamping = 0.99;
     const rollDamping = 0.99;
+    const yawDamping = 0.99; // Yaw damping
 
     if (keyboard.pitchUp) {
         pitchVelocity = Math.min(maxPitchVelocity, pitchVelocity + pitchAcceleration * deltaTime);
@@ -446,12 +467,21 @@ function updateCockpitMovement() {
         rollVelocity *= rollDamping;
     }
 
+    if (keyboard.yawLeft) {
+        yawVelocity = Math.min(maxYawVelocity, yawVelocity + yawAcceleration * deltaTime);
+    } else if (keyboard.yawRight) {
+        yawVelocity = Math.max(-maxYawVelocity, yawVelocity - yawAcceleration * deltaTime);
+    } else {
+        yawVelocity *= yawDamping;
+    }
+
     cockpit.rotateX(pitchVelocity);
     cockpit.rotateZ(rollVelocity);
+    cockpit.rotateY(yawVelocity); // Apply yaw rotation
 
     // Update throttle
     const throttleChangeSpeed = 20; // Adjusted throttle change speed
-    const brakeDeceleration = 50000; // Increased brake deceleration
+    const brakeDeceleration = 55000; // Increased brake deceleration
     const turnDeceleration = 100; // Deceleration when turning or pitching
 
     if (increasingThrottle) {
@@ -465,14 +495,14 @@ function updateCockpitMovement() {
     }
 
     // Calculate speed based on throttle
-    const maxSpeed = 599999; // Maximum speed in km/h
+    const maxSpeed = 799999; // Maximum speed in km/h
     if (!keyboard.braking) {
         speed += 0.05 * (throttle / 100) * maxSpeed * deltaTime;
     }
     speed = Math.min(maxSpeed, speed); // Clamp speed to max speed
 
     // Reduce speed when turning or pitching
-    const turnSpeedReduction = 1 - 0.04 * (Math.abs(pitchVelocity) + 0.2 * Math.abs(rollVelocity));
+    const turnSpeedReduction = 1 - 0.04 * (Math.abs(pitchVelocity) + 0.2 * (Math.abs(rollVelocity) + Math.abs(yawVelocity)));
     speed *= turnSpeedReduction;
 
     // Update 3D Text
@@ -513,9 +543,8 @@ function updateCockpitMovement() {
     camera.position.x = THREE.MathUtils.clamp(camera.position.x + shakeX, -shakeLimit, shakeLimit);
     camera.position.y = THREE.MathUtils.clamp(camera.position.y + shakeY, -shakeLimit, shakeLimit);
 
-    // Implementing exponential camera inertia for acceleration
-    const inertiaIntensity = 0.1; // Adjust the intensity of the inertia effect
-    const exponentialFactor = 0.02; // Exponential factor for the inertia effect
+    const inertiaIntensity = 0.1; 
+    const exponentialFactor = 0.02; 
 
     if (throttle > 0 && !keyboard.braking) {
         camera.position.z = THREE.MathUtils.lerp(camera.position.z, inertiaIntensity * (Math.exp(exponentialFactor * throttle) - 1) / 3, 0.1);
@@ -528,6 +557,9 @@ function updateCockpitMovement() {
     // Implementing camera movement based on pitch velocity
     const pitchInertiaIntensity = 0.005; // Adjust the intensity of the pitch inertia effect
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, -pitchVelocity * pitchInertiaIntensity * speed / 150, 0.1);
+
+    // Implementing camera movement based on yaw velocity
+    camera.position.x = THREE.MathUtils.lerp(camera.position.x, -yawVelocity * yawInertiaIntensity * speed / 150, 0.1);
 }
 
 let mouseX = 0;
@@ -554,7 +586,6 @@ function modelLoaded() {
 const loadingBar = document.getElementById('loading-bar');
 const continueText = document.getElementById('continue-text');
 const loadingText = document.getElementById('loading-text');
-const subtitle = document.getElementById('subtitle');
 
 // Function to update the loading progress
 function updateLoadingProgress() {
@@ -571,18 +602,30 @@ function updateLoadingProgress() {
     }
 }
 
+
 function startGame() {
     const loadingScreen = document.getElementById('loading-screen');
     loadingScreen.classList.add('fade-out');
     setTimeout(() => {
         loadingScreen.style.display = 'none';
+        // Ensure AudioContext starts on user gesture
+        if (THREE.AudioContext.getContext().state === 'suspended') {
+            THREE.AudioContext.getContext().resume().then(() => {
+                if (backgroundMusic && !backgroundMusic.isPlaying) {
+                    backgroundMusic.play();
+                }
+            });
+        } else {
+            if (backgroundMusic && !backgroundMusic.isPlaying) {
+                backgroundMusic.play();
+            }
+        }
         animate();
     }, 1000); // 1-second fade-out transition
 }
 
-document.addEventListener('DOMContentLoaded', (event) => {
-    showSubtitles();
-});
+// Call this function to set up the audio
+setupAudio();
 
 // Animation loop
 function animate() {
