@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { EffectComposer } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/GLTFLoader.js';
 import { FontLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/FontLoader.js';
@@ -602,6 +601,20 @@ function updateLoadingProgress() {
     }
 }
 
+function setupAudio() {
+    // Create an audio listener and add it to the camera
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    // Load the background music
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('music.mp3', function(buffer) {
+        backgroundMusic = new THREE.Audio(listener);
+        backgroundMusic.setBuffer(buffer);
+        backgroundMusic.setLoop(true);
+        backgroundMusic.setVolume(0.5); // Adjust the volume as needed
+    });
+}
 
 function startGame() {
     const loadingScreen = document.getElementById('loading-screen');
@@ -648,4 +661,3 @@ function animate() {
 }
 
 renderer.setAnimationLoop(null);
-
