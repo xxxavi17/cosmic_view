@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Abel&display=swap');
-        </style>
+    </style>
     <script type="importmap">
     {
         "imports": {
@@ -19,18 +19,23 @@
 <body>
     <div id="loading-screen">
         <div id="end-screen" class="hidden">
-    <div id="end-message">You died</div>
-</div>
-
+            <div id="end-message">You died</div>
+        </div>
         <div id="loading-content">
             <h1 id="title" class="Abel">Cosmic View</h1>
             <div id="loading-bar-container">
                 <div id="loading-bar"></div>
             </div>
-            <div id="loading-text">Loading...</div> <!-- Add this line -->
+            <div id="loading-text">Loading...</div>
             <div id="continue-text" class="hidden">Press Enter to continue...</div>
         </div>
     </div>
+    <div id="intro-screen" class="hidden">
+        <div id="intro-text" class="intro-text">Welcome Cosmic Viewer!</div>
+    </div>
+    <div id="fade-screen" class="hidden"></div>
+
+    <!-- Custom cursor -->
+    <div id="custom-cursor"></div>
 </body>
 </html>
-

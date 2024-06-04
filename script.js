@@ -6,6 +6,8 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders
 import { FontLoader } from 'https://unpkg.com/three@0.138.0/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'https://unpkg.com/three@0.138.0/examples/jsm/geometries/TextGeometry.js';
 
+
+
 let loadingComplete = false;
 let cockpit, spaceship, cameraPivot, throttle = 0, speed = 0;
 let increasingThrottle = false, decreasingThrottle = false, braking = false;
@@ -18,6 +20,42 @@ let modelsLoaded = 0;
 let totalModels = 0;
 let backgroundMusic; // Define the backgroundMusic variable
 
+let isZoomedIn = false; // Ensure initial state is not zoomed in
+let zoomProgress = 0;
+const zoomDuration = 0.2; // Zoom duration in seconds
+const zoomInFOV = 37.5; // Half of the original FOV
+const originalFOV = 75;
+
+function updateZoom(deltaTime) {
+    if (isZoomedIn) {
+        zoomProgress = Math.min(zoomProgress + deltaTime / zoomDuration, 1);
+    } else {
+        zoomProgress = Math.max(zoomProgress - deltaTime / zoomDuration, 0);
+    }
+
+    camera.fov = THREE.MathUtils.lerp(originalFOV, zoomInFOV, zoomProgress);
+    camera.updateProjectionMatrix();
+}
+
+// Handle left-click events to toggle zoom
+document.addEventListener('mousedown', (event) => {
+    if (event.button === 0) { // 0 is the left mouse button
+        isZoomedIn = !isZoomedIn;
+    }
+});
+
+
+// Handle custom cursor movement
+const customCursor = document.getElementById('custom-cursor');
+
+document.addEventListener('mousemove', (event) => {
+    mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    customCursor.style.left = `${event.clientX}px`;
+    customCursor.style.top = `${event.clientY}px`;
+});
+
 const yawInertiaIntensity = 0.01; // Adjust the intensity of the yaw inertia effect
 
 const scene = new THREE.Scene();
@@ -28,28 +66,25 @@ renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 const renderScene = new RenderPass(scene, camera);
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.1;
-bloomPass.strength = 0.3;
-bloomPass.radius = 0.1;
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.2, 0.6);
 const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
 composer.addPass(bloomPass);
 
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.17);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.1);
 hemiLight.position.set(0, 100, 0);
 scene.add(hemiLight);
 const ambientLight = new THREE.AmbientLight(0x404040, 0.01);
 scene.add(ambientLight);
 const sun = new THREE.Mesh(new THREE.SphereGeometry(500, 200, 200), new THREE.MeshBasicMaterial({ color: 0xFFA500 }));
 scene.add(sun);
-const sunlight = new THREE.PointLight(0xffffff, 1);
+const sunlight = new THREE.PointLight(0xffffff, 0.8);
 sunlight.position.set(0, 0, 0);
 scene.add(sunlight);
 
 function createSphereSkybox() {
     const skyboxRadius = 15999000; // Adjust size as necessary
-    const skyboxGeometry = new THREE.SphereGeometry(skyboxRadius, 64, 64);
+    const skyboxGeometry = new THREE.SphereGeometry(skyboxRadius, 32, 32); // Reduced detail level
     const loader = new THREE.TextureLoader();
     const skyboxMaterial = new THREE.MeshBasicMaterial({
         map: loader.load('img/a.jpg'), // Your texture path
@@ -118,7 +153,7 @@ sunLoader.load('models/sun.glb', function (gltf) {
 
 function createPlanet(planetData) {
     const scaledSize = planetData.size * 1.5;
-    const planetGeometry = new THREE.SphereGeometry(scaledSize, 32, 32);
+    const planetGeometry = new THREE.SphereGeometry(scaledSize, 16, 16); // Reduced detail level
 
     const material = new THREE.MeshStandardMaterial({
         color: planetData.color,
@@ -165,21 +200,7 @@ function loadModelAbovePlanet(planetData, planetMesh) {
             }
         });
 
-        if (planetData.name === "Saturn") {
-            const boundingSphere = model.geometry && model.geometry.boundingSphere;
-            if (boundingSphere) {
-                const center = boundingSphere.center.clone().multiplyScalar(scale);
-                model.position.set(
-                    planetMesh.position.x - center.x,
-                    planetMesh.position.y - center.y,
-                    planetMesh.position.z - center.z
-                );
-            } else {
-                model.position.copy(planetMesh.position);
-            }
-        } else {
-            model.position.copy(planetMesh.position);
-        }
+        model.position.copy(planetMesh.position);
 
         scene.add(model);
         planetMesh.model = model;
@@ -192,7 +213,7 @@ function loadModelAbovePlanet(planetData, planetMesh) {
 
 function createSaturnRings(saturn) {
     saturnRingsGroup = new THREE.Object3D();
-    const ringCount = 500;
+    const ringCount = 300; // Reduced number of rings
     const innerRadius = saturn.geometry.parameters.radius * 1.2;
     const outerRadius = saturn.geometry.parameters.radius * 2;
     const ringWidth = outerRadius - innerRadius;
@@ -201,7 +222,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 5500;
+        const particleSize = (Math.random() * 0.2 + 0.1) * 3500; // Reduced particle size
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -226,7 +247,7 @@ function createSaturnRings(saturn) {
 }
 
 function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
-    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 32); // Reduced detail level
     const ringMaterial = new THREE.MeshBasicMaterial({
         color: 0x6F5B3F,
         side: THREE.DoubleSide,
@@ -238,10 +259,11 @@ function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
 
     return ringMesh;
 }
+
 function createOrbitPath(orbitalRadius) {
     const orbitPoints = [];
-    for (let i = 0; i <= 5000; i++) {
-        const theta = (i / 5000) * 2 * Math.PI;
+    for (let i = 0; i <= 1000; i++) { // Reduced number of points
+        const theta = (i / 1000) * 2 * Math.PI;
         orbitPoints.push(new THREE.Vector3(Math.cos(theta) * orbitalRadius, 0, Math.sin(theta) * orbitalRadius));
     }
     const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
@@ -284,9 +306,6 @@ document.addEventListener('keydown', (event) => {
             break;
         case 'KeyE':
             keyboard.yawRight = true;
-            break;
-        case 'Enter':
-            if (loadingComplete) startGame();
             break;
         case 'Space':
             keyboard.braking = true;
@@ -479,8 +498,8 @@ function updateCockpitMovement() {
     cockpit.rotateY(yawVelocity); // Apply yaw rotation
 
     // Update throttle
-    const throttleChangeSpeed = 20; // Adjusted throttle change speed
-    const brakeDeceleration = 55000; // Increased brake deceleration
+    const throttleChangeSpeed = 10; // Adjusted throttle change speed
+    const brakeDeceleration = 65000; // Increased brake deceleration
     const turnDeceleration = 100; // Deceleration when turning or pitching
 
     if (increasingThrottle) {
@@ -585,6 +604,9 @@ function modelLoaded() {
 const loadingBar = document.getElementById('loading-bar');
 const continueText = document.getElementById('continue-text');
 const loadingText = document.getElementById('loading-text');
+const introScreen = document.getElementById('intro-screen');
+const introText = document.getElementById('intro-text');
+const titleText = document.getElementById('title'); // Add reference to title text
 
 // Function to update the loading progress
 function updateLoadingProgress() {
@@ -595,8 +617,10 @@ function updateLoadingProgress() {
         loadingComplete = true; // Set loadingComplete to true when all models are loaded
         // All models loaded
         setTimeout(() => {
+            titleText.style.display = 'none'; // Hide title text
             loadingText.style.display = 'none'; // Hide loading text
-            continueText.style.display = 'block'; // Show continue text
+            continueText.style.display = 'none'; // Hide continue text
+            startIntro(); // Automatically start the intro
         }, 500);
     }
 }
@@ -608,7 +632,7 @@ function setupAudio() {
 
     // Load the background music
     const audioLoader = new THREE.AudioLoader();
-    audioLoader.load('music.mp3', function(buffer) {
+    audioLoader.load('inter.mp3', function(buffer) {
         backgroundMusic = new THREE.Audio(listener);
         backgroundMusic.setBuffer(buffer);
         backgroundMusic.setLoop(true);
@@ -616,11 +640,55 @@ function setupAudio() {
     });
 }
 
-function startGame() {
+
+function startIntro() {
     const loadingScreen = document.getElementById('loading-screen');
     loadingScreen.classList.add('fade-out');
     setTimeout(() => {
         loadingScreen.style.display = 'none';
+        introScreen.style.display = 'flex';
+        if (backgroundMusic && !backgroundMusic.isPlaying) {
+            backgroundMusic.play(); // Start the music when the intro starts
+        }
+        runIntroSequence();
+    }, 1000); // 1-second fade-out transition
+}
+
+
+function runIntroSequence() {
+    const introTexts = [
+        "Welcome to Cosmic View !",
+        "Warning:\n\n\n This game consumes a lot of computational resources,\n\n so it is recommended to plug in the charger\n\n and turn on the Performance mode on your PC power settings.",
+        "Suggestions:\n\n\nPress F11 to play in FULLSCREEN mode\n\n and use HEADPHONES for a better experience.",
+        "Use the mouse to LOOK AROUND and left click to ZOOM\n\n Also use HEADPHONES for a better experience.",
+        "Have fun !"
+    ];
+    let currentTextIndex = 0;
+
+    function showNextText() {
+        if (currentTextIndex > 0) {
+            introText.classList.remove('visible');
+        }
+
+        setTimeout(() => {
+            if (currentTextIndex < introTexts.length) {
+                introText.innerText = introTexts[currentTextIndex];
+                introText.classList.add('visible');
+                currentTextIndex++;
+                setTimeout(showNextText, 9000); // Show next text after 5 seconds
+            } else {
+                startGame();
+            }
+        },2000); // Reduced initial delay before the first text
+    }
+
+    showNextText();
+}
+
+function startGame() {
+    introScreen.classList.add('fade-out');
+    setTimeout(() => {
+        introScreen.style.display = 'none';
         // Ensure AudioContext starts on user gesture
         if (THREE.AudioContext.getContext().state === 'suspended') {
             THREE.AudioContext.getContext().resume().then(() => {
@@ -634,15 +702,24 @@ function startGame() {
             }
         }
         animate();
-    }, 1000); // 1-second fade-out transition
+    }, 2000); // 1-second fade-out transition
 }
 
 // Call this function to set up the audio
 setupAudio();
 
+// Handle resize for fullscreen mode
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
+
+    const deltaTime = 1 / 60; // Assuming 60 FPS
 
     planets.forEach(planet => {
         planet.angle += planet.orbitalSpeed;
@@ -656,8 +733,7 @@ function animate() {
 
     updateCockpitMovement();
     updateCameraLook();
+    updateZoom(deltaTime); // Call updateZoom here
 
     composer.render();
 }
-
-renderer.setAnimationLoop(null);

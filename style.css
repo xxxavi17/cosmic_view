@@ -1,23 +1,48 @@
-body, h1, #loading-text, #continue-text {
-    font-family: 'Sansation', sans-serif; /* Add this line */
-    margin: 0%;
-    overflow: hidden;
-    font-family: "Abel", sans-serif;
-    font-weight: 400;
-    font-style: normal;
+/* Custom cursor style */
+#custom-cursor {
+    width: 10px;
+    height: 10px;
+    background-color: gray;
+    border-radius: 50%;
+    position: absolute;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
 }
 
+body {
+    cursor: none;
+}
+
+/* Ensure default visibility of loading screen */
 #loading-screen {
-    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
+    color: white;
+    z-index: 10;
+}
+
+/* Ensure intro screen is hidden by default */
+#intro-screen {
+    display: none;
+}
+
+/* Other existing styles */
+body, h1, #loading-text, #continue-text {
+    font-family: 'Sansation', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    font-family: "Abel", sans-serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 #title {
@@ -45,7 +70,7 @@ body, h1, #loading-text, #continue-text {
     transition: width 0.5s;
 }
 
-#loading-text { /* Add this block */
+#loading-text {
     color: rgb(224, 255, 224);
     font-size: 1.5em;
     margin-bottom: 20px;
@@ -76,11 +101,60 @@ body, h1, #loading-text, #continue-text {
     }
 }
 
-@keyframes blink { /* Add this block */
+@keyframes blink {
     0%, 50%, 100% {
         opacity: 1;
     }
     25%, 75% {
         opacity: 0;
     }
+}
+
+/* Introduction Screen Styles */
+#intro-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: white;
+    font-size: 2em;
+    font-family: "Abel", sans-serif;
+    text-align: center;
+    z-index: 20;
+}
+
+.intro-text {
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.intro-text.visible {
+    opacity: 1;
+}
+
+/* Fade screen for smooth transition */
+#fade-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 30;
+    opacity: 0;
+    transition: opacity 2s;
+}
+
+.fade-to-black {
+    opacity: 1;
+}
+
+.fade-to-game {
+    opacity: 0;
 }
