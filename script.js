@@ -18,12 +18,12 @@ let rollVelocity = 0;
 let yawVelocity = 0;
 let modelsLoaded = 0;
 let totalModels = 0;
-let backgroundMusic; // Define the backgroundMusic variable
+let backgroundMusic; 
 
-let isZoomedIn = false; // Ensure initial state is not zoomed in
+let isZoomedIn = false; 
 let zoomProgress = 0;
-const zoomDuration = 0.2; // Zoom duration in seconds
-const zoomInFOV = 37.5; // Half of the original FOV
+const zoomDuration = 0.2; 
+const zoomInFOV = 37.5; 
 const originalFOV = 75;
 
 function updateZoom(deltaTime) {
@@ -56,7 +56,7 @@ document.addEventListener('mousemove', (event) => {
     customCursor.style.top = `${event.clientY}px`;
 });
 
-const yawInertiaIntensity = 0.01; // Adjust the intensity of the yaw inertia effect
+const yawInertiaIntensity = 0.01; // Intensity of the yaw inertia effect
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
@@ -83,11 +83,11 @@ sunlight.position.set(0, 0, 0);
 scene.add(sunlight);
 
 function createSphereSkybox() {
-    const skyboxRadius = 15999000; // Adjust size as necessary
+    const skyboxRadius = 15999000; 
     const skyboxGeometry = new THREE.SphereGeometry(skyboxRadius, 32, 32); // Reduced detail level
     const loader = new THREE.TextureLoader();
     const skyboxMaterial = new THREE.MeshBasicMaterial({
-        map: loader.load('img/a.jpg'), // Your texture path
+        map: loader.load('img/a.jpg'), 
         side: THREE.BackSide
     });
 
@@ -100,10 +100,8 @@ function createSphereSkybox() {
     scene.add(skybox);
 }
 
-// Call the new function to create the sphere skybox
 createSphereSkybox();
 
-// Adjust camera's near and far planes to handle larger scales better
 camera.near = 0.1;
 camera.far = 9500000;
 camera.updateProjectionMatrix();
@@ -133,20 +131,20 @@ const planetModels = {
 const planets = [];
 let saturnRingsGroup = null;
 solarSystemPlanets.forEach(planetData => {
-    totalModels++; // Increase the total number of models to load
+    totalModels++;
     const planet = createPlanet(planetData);
     planets.push(planet);
 });
 
 const sunLoader = new GLTFLoader();
-totalModels++; // Increase the total number of models to load
+totalModels++; 
 sunLoader.load('models/sun.glb', function (gltf) {
     const sunModel = gltf.scene;
     sunModel.position.set(0, 0, 0);
     sunModel.scale.set(42000, 42000, 42000);
     scene.add(sunModel);
     sunlight.target = sunModel;
-    modelLoaded(); // Call modelLoaded when the model is successfully loaded
+    modelLoaded(); 
 }, undefined, function (error) {
     console.error('An error happened loading the sun model:', error);
 });
@@ -205,7 +203,7 @@ function loadModelAbovePlanet(planetData, planetMesh) {
         scene.add(model);
         planetMesh.model = model;
         console.log(`${planetData.name} model loaded and adjusted.`);
-        modelLoaded(); // Call modelLoaded when the model is successfully loaded
+        modelLoaded(); 
     }, undefined, (error) => {
         console.error(`Error loading model for ${planetData.name}:`, error);
     });
@@ -213,7 +211,7 @@ function loadModelAbovePlanet(planetData, planetMesh) {
 
 function createSaturnRings(saturn) {
     saturnRingsGroup = new THREE.Object3D();
-    const ringCount = 300; // Reduced number of rings
+    const ringCount = 300; 
     const innerRadius = saturn.geometry.parameters.radius * 1.2;
     const outerRadius = saturn.geometry.parameters.radius * 2;
     const ringWidth = outerRadius - innerRadius;
@@ -222,7 +220,7 @@ function createSaturnRings(saturn) {
     for (let i = 0; i < ringCount; i++) {
         const theta = Math.random() * Math.PI * 2;
         const distanceFromPlanet = innerRadius + Math.random() * ringWidth;
-        const particleSize = (Math.random() * 0.2 + 0.1) * 3500; // Reduced particle size
+        const particleSize = (Math.random() * 0.2 + 0.1) * 3500; 
 
         const asteroidGeometry = new THREE.DodecahedronGeometry(particleSize, 0);
         const asteroidMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
@@ -247,7 +245,7 @@ function createSaturnRings(saturn) {
 }
 
 function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
-    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 32); // Reduced detail level
+    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 32); 
     const ringMaterial = new THREE.MeshBasicMaterial({
         color: 0x6F5B3F,
         side: THREE.DoubleSide,
@@ -262,7 +260,7 @@ function createSaturnRingPlane(innerRadius, outerRadius, tiltAngle) {
 
 function createOrbitPath(orbitalRadius) {
     const orbitPoints = [];
-    for (let i = 0; i <= 1000; i++) { // Reduced number of points
+    for (let i = 0; i <= 1000; i++) { 
         const theta = (i / 1000) * 2 * Math.PI;
         orbitPoints.push(new THREE.Vector3(Math.cos(theta) * orbitalRadius, 0, Math.sin(theta) * orbitalRadius));
     }
@@ -344,7 +342,7 @@ document.addEventListener('keyup', (event) => {
 });
 
 document.addEventListener('wheel', (event) => {
-    const throttleChangeSpeed = 2; // Adjust the throttle change speed based on scroll
+    const throttleChangeSpeed = 2; 
 
     if (event.deltaY < 0) {
         // Scrolling up
@@ -356,7 +354,7 @@ document.addEventListener('wheel', (event) => {
 });
 
 const cockpitLoader = new GLTFLoader();
-totalModels++; // Increase the total number of models to load
+totalModels++; 
 cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     cockpit = gltf.scene;
     cockpit.scale.set(20, 20, 20);
@@ -367,12 +365,12 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     cameraPivot.add(camera);
     camera.position.set(0, 0, 0); // Position the camera inside the cockpit
 
-    const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance as needed
+    const greenLight = new THREE.PointLight(0x00ff00, 2, 2); // Adjust intensity and distance 
     greenLight.position.set(0, 1, 0); // Position the light slightly above the camera
     cameraPivot.add(greenLight); // Attach the light to the cameraPivot
 
     // Set the initial position of the cockpit above the sun
-    cockpit.position.set(2450000, 5985000, 4300000); // Adjust the height as necessary to position above the sun
+    cockpit.position.set(2450000, 5985000, 4300000); 
     
     scene.add(cockpit);
 
@@ -387,9 +385,9 @@ cockpitLoader.load('models/cockpit2.glb', (gltf) => {
     totalModels++; // Increase the total number of models to load
     spaceshipLoader.load('models/spaceship.glb', (gltf) => {
         spaceship = gltf.scene;
-        spaceship.scale.set(15250, 15250, 15250); // Adjust the scale as necessary
+        spaceship.scale.set(15250, 15250, 15250); 
         spaceship.position.set(2450000, 6005000, 4380000); // Place the spaceship at a fixed position
-        spaceship.rotation.set(0.5, 0.5, 0.5); // Adjust the rotation as necessary
+        spaceship.rotation.set(0.5, 0.5, 0.5); 
         scene.add(spaceship);
         modelLoaded(); // Call modelLoaded when the spaceship is successfully loaded
     }, undefined, function (error) {
@@ -409,8 +407,8 @@ function createHUD() {
     // Create Throttle Text
     let throttleTextGeometry = new TextGeometry(`Throttle:\n\n      0%`, {
         font: font,
-        size: 0.022,  // Adjust size here
-        height: 0.001,  // Adjust height to be very thin
+        size: 0.022,  
+        height: 0.001,  
     });
     throttleTextMesh = new THREE.Mesh(throttleTextGeometry, textMaterial);
     throttleTextMesh.position.set(-0.45, -0.265, -0.765); // Adjust position as needed
@@ -420,8 +418,8 @@ function createHUD() {
     // Speed Display
     let speedTextGeometry = new TextGeometry(`    Speed:\n\n0 km/h`, {
         font: font,
-        size: 0.03,     // tamanho
-        height: 0.001,  // espessura
+        size: 0.03,     
+        height: 0.001, 
     });
     speedTextMesh = new THREE.Mesh(speedTextGeometry, textMaterial);
     speedTextMesh.position.set(-0.112, -0.25, -0.77); // posição
@@ -636,7 +634,7 @@ function setupAudio() {
         backgroundMusic = new THREE.Audio(listener);
         backgroundMusic.setBuffer(buffer);
         backgroundMusic.setLoop(true);
-        backgroundMusic.setVolume(0.5); // Adjust the volume as needed
+        backgroundMusic.setVolume(0.5); 
     });
 }
 
@@ -648,7 +646,7 @@ function startIntro() {
         loadingScreen.style.display = 'none';
         introScreen.style.display = 'flex';
         if (backgroundMusic && !backgroundMusic.isPlaying) {
-            backgroundMusic.play(); // Start the music when the intro starts
+            backgroundMusic.play(); // Start the music
         }
         runIntroSequence();
     }, 1000); // 1-second fade-out transition
@@ -705,7 +703,7 @@ function startGame() {
     }, 2000); // 1-second fade-out transition
 }
 
-// Call this function to set up the audio
+
 setupAudio();
 
 // Handle resize for fullscreen mode
@@ -719,7 +717,7 @@ window.addEventListener('resize', () => {
 function animate() {
     requestAnimationFrame(animate);
 
-    const deltaTime = 1 / 60; // Assuming 60 FPS
+    const deltaTime = 1 / 60; 
 
     planets.forEach(planet => {
         planet.angle += planet.orbitalSpeed;
@@ -733,7 +731,7 @@ function animate() {
 
     updateCockpitMovement();
     updateCameraLook();
-    updateZoom(deltaTime); // Call updateZoom here
+    updateZoom(deltaTime); 
 
     composer.render();
 }

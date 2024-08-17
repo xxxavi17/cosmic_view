@@ -20,8 +20,8 @@ export const MotionBlurShader = {
             vec4 color = texture2D(tDiffuse, texCoord);
 
             // Motion blur effect at borders
-            float blurAmount = velocityFactor * 0.1; // Adjust blur intensity as needed
-            float edgeThreshold = 0.1; // Defines the width of the border to be blurred
+            float blurAmount = velocityFactor * 0.1; 
+            float edgeThreshold = 0.1; 
 
             // Calculate distance from the edge
             float edgeDistance = min(vUv.x, 1.0 - vUv.x);
@@ -35,7 +35,7 @@ export const MotionBlurShader = {
                         sum += texture2D(tDiffuse, texCoord + vec2(i, j) * 0.00005 * blurAmount);
                     }
                 }
-                color = mix(color, sum / 81.0, blurStrength); // Blend the blur with the original color
+                color = mix(color, sum / 81.0, blurStrength); 
             }
 
             gl_FragColor = color;
